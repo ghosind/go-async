@@ -3,6 +3,7 @@ package async
 import (
 	"context"
 	"errors"
+	"sync"
 )
 
 func All(funcs ...func(context.Context) error) error {
@@ -64,4 +65,45 @@ func all(parent context.Context, funcs ...func(context.Context) error) error {
 			return nil
 		}
 	}
+}
+
+func AllCompleted(funcs ...func(context.Context) error) ([]error, bool) {
+	return allCompleted(context.Background(), funcs...)
+}
+
+func AllCompletedWithContext(ctx context.Context, funcs ...func(context.Context) error) ([]error, bool) {
+	return allCompleted(ctx, funcs...)
+}
+
+func allCompleted(parent context.Context, funcs ...func(context.Context) error) (errs []error, hasError bool) {
+	hasError = false
+	errs = make([]error, len(funcs))
+	if len(funcs) == 0 {
+		return
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(funcs))
+
+	for i := 0; i < len(funcs); i++ {
+		n := i
+		fn := funcs[n]
+		go func() {
+			childCtx, childCanFunc := context.WithCancel(parent)
+			defer childCanFunc()
+			defer wg.Done()
+
+			err := executionContainer(func() error {
+				return fn(childCtx)
+			})
+			if err != nil {
+				hasError = true
+				errs[n] = err
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	return
 }
