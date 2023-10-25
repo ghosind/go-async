@@ -1,4 +1,4 @@
-package async_test
+package async
 
 import (
 	"context"
@@ -7,13 +7,12 @@ import (
 	"time"
 
 	"github.com/ghosind/go-assert"
-	"github.com/ghosind/go-async"
 )
 
 func TestAllWithoutFuncs(t *testing.T) {
 	a := assert.New(t)
 
-	err := async.All()
+	err := All()
 	a.NilNow(err)
 }
 
@@ -31,7 +30,7 @@ func TestAllSuccess(t *testing.T) {
 		})
 	}
 
-	err := async.All(funcs...)
+	err := All(funcs...)
 	a.NilNow(err)
 	a.EqualNow(data, []bool{true, true, true, true, true})
 }
@@ -53,7 +52,7 @@ func TestAllFailure(t *testing.T) {
 		})
 	}
 
-	err := async.All(funcs...)
+	err := All(funcs...)
 	a.NotNilNow(err)
 	a.EqualNow(err.Error(), "n = 2")
 	a.EqualNow(data, []bool{true, true, false, false, false})
@@ -76,7 +75,7 @@ func TestAllWithTimeoutedContext(t *testing.T) {
 	ctx, canFunc := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer canFunc()
 
-	err := async.AllWithContext(ctx, funcs...)
+	err := AllWithContext(ctx, funcs...)
 	a.NotNilNow(err)
 	a.Equal(err.Error(), "context canceled")
 	a.EqualNow(data, []bool{true, true, false, false, false})

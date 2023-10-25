@@ -6,14 +6,14 @@ import (
 )
 
 func All(funcs ...func(context.Context) error) error {
-	return allWithContext(context.Background(), funcs...)
+	return all(context.Background(), funcs...)
 }
 
 func AllWithContext(ctx context.Context, funcs ...func(context.Context) error) error {
-	return allWithContext(ctx, funcs...)
+	return all(ctx, funcs...)
 }
 
-func allWithContext(parent context.Context, funcs ...func(context.Context) error) error {
+func all(parent context.Context, funcs ...func(context.Context) error) error {
 	if len(funcs) == 0 {
 		return nil
 	}
@@ -32,7 +32,10 @@ func allWithContext(parent context.Context, funcs ...func(context.Context) error
 			childCtx, childCanFunc := context.WithCancel(ctx)
 			defer childCanFunc()
 
-			err := fn(childCtx)
+			err := executionContainer(func() error {
+				return fn(childCtx)
+			})
+
 			select {
 			case <-ctx.Done():
 				return
