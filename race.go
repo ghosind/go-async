@@ -5,14 +5,21 @@ import (
 	"sync/atomic"
 )
 
+// Race executes the functions asynchronously, it will return the result of the first of the
+// finished function (including panic), and it will not send a cancel signal to other functions.
 func Race(funcs ...func(context.Context) error) error {
 	return race(context.Background(), funcs...)
 }
 
+// RaceWithContext executes the functions asynchronously, it will return the result of the first of
+// the finished function (including panic), and it will not send a cancel signal to other
+// functions.
 func RaceWithContext(ctx context.Context, funcs ...func(context.Context) error) error {
 	return race(ctx, funcs...)
 }
 
+// race executes the functions asynchronously, it will return the result of the first of the
+// finished function (including panic).
 func race(ctx context.Context, funcs ...func(context.Context) error) error {
 	if len(funcs) == 0 {
 		return nil
