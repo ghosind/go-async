@@ -19,6 +19,10 @@ func all(parent context.Context, funcs ...func(context.Context) error) error {
 		return nil
 	}
 
+	if parent == nil {
+		parent = context.Background()
+	}
+
 	ctx, canFunc := context.WithCancel(parent)
 	errCh := make(chan error)
 	retCh := make(chan struct{}, len(funcs))
@@ -80,6 +84,10 @@ func allCompleted(parent context.Context, funcs ...func(context.Context) error) 
 	errs = make([]error, len(funcs))
 	if len(funcs) == 0 {
 		return
+	}
+
+	if parent == nil {
+		parent = context.Background()
 	}
 
 	wg := sync.WaitGroup{}

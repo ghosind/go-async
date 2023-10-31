@@ -18,6 +18,10 @@ func race(ctx context.Context, funcs ...func(context.Context) error) error {
 		return nil
 	}
 
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	finished := atomic.Bool{}
 	ch := make(chan error)
 	defer close(ch)

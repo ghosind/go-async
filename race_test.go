@@ -38,6 +38,17 @@ func TestRace(t *testing.T) {
 	a.EqualNow(data, []bool{true, true, true, true, true})
 }
 
+func TestRaceWithNilContext(t *testing.T) {
+	a := assert.New(t)
+
+	//lint:ignore SA1012 for test case only
+	err := RaceWithContext(nil, func(ctx context.Context) error {
+		time.Sleep(100 * time.Millisecond)
+		return nil
+	})
+	a.NilNow(err)
+}
+
 func TestRaceWithContext(t *testing.T) {
 	a := assert.New(t)
 

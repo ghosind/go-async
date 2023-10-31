@@ -58,6 +58,17 @@ func TestAllFailure(t *testing.T) {
 	a.EqualNow(data, []bool{true, true, false, false, false})
 }
 
+func TestAllWithNilContext(t *testing.T) {
+	a := assert.New(t)
+
+	//lint:ignore SA1012 for test case only
+	err := AllWithContext(nil, func(ctx context.Context) error {
+		time.Sleep(100 * time.Millisecond)
+		return nil
+	})
+	a.NilNow(err)
+}
+
 func TestAllWithTimeoutContext(t *testing.T) {
 	a := assert.New(t)
 
@@ -132,6 +143,18 @@ func TestAllCompletedPartialFailure(t *testing.T) {
 	a.TrueNow(hasError)
 	a.EqualNow(data, []bool{true, true, false, true, true})
 	a.EqualNow(errs, []error{nil, nil, errNIs2, nil, nil})
+}
+
+func TestAllCompletedWithNilContext(t *testing.T) {
+	a := assert.New(t)
+
+	//lint:ignore SA1012 for test case only
+	errs, hasError := AllCompletedWithContext(nil, func(ctx context.Context) error {
+		time.Sleep(100 * time.Millisecond)
+		return nil
+	})
+	a.NotTrueNow(hasError)
+	a.EqualNow(errs, []error{nil})
 }
 
 func TestAllCompletedWithTimeoutContext(t *testing.T) {
