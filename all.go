@@ -32,12 +32,10 @@ func all(parent context.Context, funcs ...func(context.Context) error) error {
 	}
 
 	ctx, canFunc := context.WithCancel(parent)
-	errCh := make(chan error)
-	retCh := make(chan struct{}, len(funcs))
-
 	defer canFunc()
+
+	errCh := make(chan error)
 	defer close(errCh)
-	defer close(retCh)
 
 	for i := 0; i < len(funcs); i++ {
 		fn := funcs[i]
@@ -53,30 +51,25 @@ func all(parent context.Context, funcs ...func(context.Context) error) error {
 			case <-ctx.Done():
 				return
 			default:
-				if err != nil {
-					errCh <- err
-				} else {
-					retCh <- struct{}{}
-				}
+				errCh <- err
 			}
 		}()
 	}
 
 	finished := 0
-	for {
+	for finished < len(funcs) {
 		select {
 		case <-parent.Done():
 			return errors.New("context canceled")
 		case err := <-errCh:
-			return err
-		case <-retCh:
+			if err != nil {
+				return err
+			}
 			finished++
 		}
-
-		if finished == len(funcs) {
-			return nil
-		}
 	}
+
+	return nil
 }
 
 // AllCompleted executes the functions asynchronously until all functions have been finished. It
