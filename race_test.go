@@ -12,8 +12,9 @@ import (
 func TestRaceWithoutFuncs(t *testing.T) {
 	a := assert.New(t)
 
-	err := Race()
+	index, err := Race()
 	a.NilNow(err)
+	a.EqualNow(index, -1)
 }
 
 func TestRace(t *testing.T) {
@@ -30,8 +31,9 @@ func TestRace(t *testing.T) {
 		})
 	}
 
-	err := Race(funcs...)
+	index, err := Race(funcs...)
 	a.NilNow(err)
+	a.EqualNow(index, 0)
 	a.EqualNow(data, []bool{true, false, false, false, false})
 
 	time.Sleep(300 * time.Millisecond)
@@ -42,11 +44,12 @@ func TestRaceWithNilContext(t *testing.T) {
 	a := assert.New(t)
 
 	//lint:ignore SA1012 for test case only
-	err := RaceWithContext(nil, func(ctx context.Context) error {
+	index, err := RaceWithContext(nil, func(ctx context.Context) error {
 		time.Sleep(100 * time.Millisecond)
 		return nil
 	})
 	a.NilNow(err)
+	a.EqualNow(index, 0)
 }
 
 func TestRaceWithContext(t *testing.T) {
@@ -71,8 +74,9 @@ func TestRaceWithContext(t *testing.T) {
 	ctx, canFunc := context.WithTimeout(context.Background(), 170*time.Millisecond)
 	defer canFunc()
 
-	err := RaceWithContext(ctx, funcs...)
+	index, err := RaceWithContext(ctx, funcs...)
 	a.NilNow(err)
+	a.EqualNow(index, 0)
 	a.EqualNow(data, []bool{true, false, false, false, false})
 
 	time.Sleep(300 * time.Millisecond)

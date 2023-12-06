@@ -7,24 +7,25 @@ import (
 	"github.com/ghosind/utils"
 )
 
-// Race executes the functions asynchronously, it will return the result of the first of the
-// finished function (including panic), and it will not send a cancel signal to other functions.
-func Race(funcs ...func(context.Context) error) error {
+// Race executes the functions asynchronously, it will return the index and the result of the first
+// of the finished function (including panic), and it will not send a cancel signal to other
+// functions.
+func Race(funcs ...func(context.Context) error) (int, error) {
 	return race(context.Background(), funcs...)
 }
 
-// RaceWithContext executes the functions asynchronously, it will return the result of the first of
-// the finished function (including panic), and it will not send a cancel signal to other
-// functions.
-func RaceWithContext(ctx context.Context, funcs ...func(context.Context) error) error {
+// RaceWithContext executes the functions asynchronously, it will return the index and the result
+// of the first of the finished function (including panic), and it will not send a cancel signal
+// to other functions.
+func RaceWithContext(ctx context.Context, funcs ...func(context.Context) error) (int, error) {
 	return race(ctx, funcs...)
 }
 
-// race executes the functions asynchronously, it will return the result of the first of the
-// finished function (including panic).
-func race(ctx context.Context, funcs ...func(context.Context) error) error {
+// race executes the functions asynchronously, it will return the index and the result of the first
+// of the finished function (including panic).
+func race(ctx context.Context, funcs ...func(context.Context) error) (int, error) {
 	if len(funcs) == 0 {
-		return nil
+		return -1, nil
 	}
 
 	if ctx == nil {
@@ -32,23 +33,33 @@ func race(ctx context.Context, funcs ...func(context.Context) error) error {
 	}
 
 	finished := atomic.Bool{}
-	ch := make(chan error)
+	ch := make(chan struct {
+		Index int
+		Error error
+	})
 	defer close(ch)
 
 	for i := 0; i < len(funcs); i++ {
 		fn := funcs[i]
+		n := i
 
 		go func() {
 			err := utils.Try(func() error {
 				return fn(ctx)
 			})
 			if finished.CompareAndSwap(false, true) {
-				ch <- err
+				ch <- struct {
+					Index int
+					Error error
+				}{
+					Index: n,
+					Error: err,
+				}
 			}
 		}()
 	}
 
-	err := <-ch
+	ret := <-ch
 
-	return err
+	return ret.Index, ret.Error
 }
