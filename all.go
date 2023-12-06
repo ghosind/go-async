@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"sync"
+
+	"github.com/ghosind/utils"
 )
 
 // All executes the functions asynchronously until all functions have been finished. If some
@@ -43,7 +45,7 @@ func all(parent context.Context, funcs ...func(context.Context) error) error {
 			childCtx, childCanFunc := context.WithCancel(ctx)
 			defer childCanFunc()
 
-			err := executionContainer(func() error {
+			err := utils.Try(func() error {
 				return fn(childCtx)
 			})
 
@@ -117,7 +119,7 @@ func allCompleted(
 			defer childCanFunc()
 			defer wg.Done()
 
-			err := executionContainer(func() error {
+			err := utils.Try(func() error {
 				return fn(childCtx)
 			})
 			if err != nil {

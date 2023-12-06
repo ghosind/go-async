@@ -3,6 +3,8 @@ package async
 import (
 	"context"
 	"sync/atomic"
+
+	"github.com/ghosind/utils"
 )
 
 // Race executes the functions asynchronously, it will return the result of the first of the
@@ -37,7 +39,9 @@ func race(ctx context.Context, funcs ...func(context.Context) error) error {
 		fn := funcs[i]
 
 		go func() {
-			err := fn(ctx)
+			err := utils.Try(func() error {
+				return fn(ctx)
+			})
 			if finished.CompareAndSwap(false, true) {
 				ch <- err
 			}
