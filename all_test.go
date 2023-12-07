@@ -12,8 +12,9 @@ import (
 func TestAllWithoutFuncs(t *testing.T) {
 	a := assert.New(t)
 
-	err := All()
+	index, err := All()
 	a.NilNow(err)
+	a.EqualNow(index, -1)
 }
 
 func TestAllSuccess(t *testing.T) {
@@ -30,8 +31,9 @@ func TestAllSuccess(t *testing.T) {
 		})
 	}
 
-	err := All(funcs...)
+	index, err := All(funcs...)
 	a.NilNow(err)
+	a.EqualNow(index, -1)
 	a.EqualNow(data, []bool{true, true, true, true, true})
 }
 
@@ -52,8 +54,9 @@ func TestAllFailure(t *testing.T) {
 		})
 	}
 
-	err := All(funcs...)
+	index, err := All(funcs...)
 	a.NotNilNow(err)
+	a.EqualNow(index, 2)
 	a.EqualNow(err.Error(), "n = 2")
 	a.EqualNow(data, []bool{true, true, false, false, false})
 }
@@ -62,11 +65,12 @@ func TestAllWithNilContext(t *testing.T) {
 	a := assert.New(t)
 
 	//lint:ignore SA1012 for test case only
-	err := AllWithContext(nil, func(ctx context.Context) error {
+	index, err := AllWithContext(nil, func(ctx context.Context) error {
 		time.Sleep(100 * time.Millisecond)
 		return nil
 	})
 	a.NilNow(err)
+	a.EqualNow(index, -1)
 }
 
 func TestAllWithTimeoutContext(t *testing.T) {
@@ -86,8 +90,9 @@ func TestAllWithTimeoutContext(t *testing.T) {
 	ctx, canFunc := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer canFunc()
 
-	err := AllWithContext(ctx, funcs...)
+	index, err := AllWithContext(ctx, funcs...)
 	a.NotNilNow(err)
+	a.EqualNow(index, -1)
 	a.Equal(err.Error(), "context canceled")
 	a.EqualNow(data, []bool{true, true, false, false, false})
 }

@@ -9,24 +9,31 @@ import (
 )
 
 // All executes the functions asynchronously until all functions have been finished. If some
-// function returns an error or panic, it will return the error immediately and send a cancel
-// signal to all other functions by context.
-func All(funcs ...func(context.Context) error) error {
+// function returns an error or panic, it will immediately return the index of the function and the
+// error, and send a cancel signal to all other functions by context.
+//
+// The index of the function will be -1 if all functions have been completed without error or
+// panic.
+func All(funcs ...func(context.Context) error) (int, error) {
 	return all(context.Background(), funcs...)
 }
 
 // AllWithContext executes the functions asynchronously until all functions have been finished, or
 // the context is done (canceled or timeout). If some function returns an error or panic, it will
-// return the error immediately and send a cancel signal to all other functions by context.
-func AllWithContext(ctx context.Context, funcs ...func(context.Context) error) error {
+// immediately return the index of the index and the error and send a cancel signal to all other
+// functions by context.
+//
+// The index of the function will be -1 if all functions have been completed without error or
+// panic, or the context has been canceled (or timeout) before all functions finished.
+func AllWithContext(ctx context.Context, funcs ...func(context.Context) error) (int, error) {
 	return all(ctx, funcs...)
 }
 
 // all executes the functions asynchronously until all functions have been finished, or the context
 // is done (canceled or timeout).
-func all(parent context.Context, funcs ...func(context.Context) error) error {
+func all(parent context.Context, funcs ...func(context.Context) error) (int, error) {
 	if len(funcs) == 0 {
-		return nil
+		return -1, nil
 	}
 
 	if parent == nil {
@@ -36,11 +43,12 @@ func all(parent context.Context, funcs ...func(context.Context) error) error {
 	ctx, canFunc := context.WithCancel(parent)
 	defer canFunc()
 
-	errCh := make(chan error)
-	defer close(errCh)
+	ch := make(chan executeResult)
+	defer close(ch)
 
 	for i := 0; i < len(funcs); i++ {
 		fn := funcs[i]
+		n := i
 		go func() {
 			childCtx, childCanFunc := context.WithCancel(ctx)
 			defer childCanFunc()
@@ -53,7 +61,10 @@ func all(parent context.Context, funcs ...func(context.Context) error) error {
 			case <-ctx.Done():
 				return
 			default:
-				errCh <- err
+				ch <- executeResult{
+					Error: err,
+					Index: n,
+				}
 			}
 		}()
 	}
@@ -62,16 +73,16 @@ func all(parent context.Context, funcs ...func(context.Context) error) error {
 	for finished < len(funcs) {
 		select {
 		case <-parent.Done():
-			return errors.New("context canceled")
-		case err := <-errCh:
-			if err != nil {
-				return err
+			return -1, errors.New("context canceled")
+		case ret := <-ch:
+			if ret.Error != nil {
+				return ret.Index, ret.Error
 			}
 			finished++
 		}
 	}
 
-	return nil
+	return -1, nil
 }
 
 // AllCompleted executes the functions asynchronously until all functions have been finished. It
