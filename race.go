@@ -33,10 +33,7 @@ func race(ctx context.Context, funcs ...func(context.Context) error) (int, error
 	}
 
 	finished := atomic.Bool{}
-	ch := make(chan struct {
-		Index int
-		Error error
-	})
+	ch := make(chan executeResult)
 	defer close(ch)
 
 	for i := 0; i < len(funcs); i++ {
@@ -48,10 +45,7 @@ func race(ctx context.Context, funcs ...func(context.Context) error) (int, error
 				return fn(ctx)
 			})
 			if finished.CompareAndSwap(false, true) {
-				ch <- struct {
-					Index int
-					Error error
-				}{
+				ch <- executeResult{
 					Index: n,
 					Error: err,
 				}
