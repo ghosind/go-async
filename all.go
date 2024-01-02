@@ -2,7 +2,6 @@ package async
 
 import (
 	"context"
-	"errors"
 	"sync"
 
 	"github.com/ghosind/utils"
@@ -73,7 +72,7 @@ func all(parent context.Context, funcs ...AsyncFn) (int, error) {
 	for finished < len(funcs) {
 		select {
 		case <-parent.Done():
-			return -1, errors.New("context canceled")
+			return -1, ErrContextCanceled
 		case ret := <-ch:
 			if ret.Error != nil {
 				return ret.Index, ret.Error
