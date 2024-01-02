@@ -10,20 +10,20 @@ import (
 // Race executes the functions asynchronously, it will return the index and the result of the first
 // of the finished function (including panic), and it will not send a cancel signal to other
 // functions.
-func Race(funcs ...func(context.Context) error) (int, error) {
+func Race(funcs ...AsyncFn) (int, error) {
 	return race(context.Background(), funcs...)
 }
 
 // RaceWithContext executes the functions asynchronously, it will return the index and the result
 // of the first of the finished function (including panic), and it will not send a cancel signal
 // to other functions.
-func RaceWithContext(ctx context.Context, funcs ...func(context.Context) error) (int, error) {
+func RaceWithContext(ctx context.Context, funcs ...AsyncFn) (int, error) {
 	return race(ctx, funcs...)
 }
 
 // race executes the functions asynchronously, it will return the index and the result of the first
 // of the finished function (including panic).
-func race(ctx context.Context, funcs ...func(context.Context) error) (int, error) {
+func race(ctx context.Context, funcs ...AsyncFn) (int, error) {
 	if len(funcs) == 0 {
 		return -1, nil
 	}

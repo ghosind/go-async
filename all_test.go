@@ -21,7 +21,7 @@ func TestAllSuccess(t *testing.T) {
 	a := assert.New(t)
 
 	data := make([]bool, 5)
-	funcs := make([]func(context.Context) error, 0, 5)
+	funcs := make([]AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) error {
@@ -41,7 +41,7 @@ func TestAllFailure(t *testing.T) {
 	a := assert.New(t)
 
 	data := make([]bool, 5)
-	funcs := make([]func(context.Context) error, 0, 5)
+	funcs := make([]AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) error {
@@ -77,7 +77,7 @@ func TestAllWithTimeoutContext(t *testing.T) {
 	a := assert.New(t)
 
 	data := make([]bool, 5)
-	funcs := make([]func(context.Context) error, 0, 5)
+	funcs := make([]AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) error {
@@ -109,7 +109,7 @@ func TestAllCompletedSuccess(t *testing.T) {
 	a := assert.New(t)
 
 	data := make([]bool, 5)
-	funcs := make([]func(context.Context) error, 0, 5)
+	funcs := make([]AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) error {
@@ -131,7 +131,7 @@ func TestAllCompletedPartialFailure(t *testing.T) {
 	errNIs2 := errors.New("n = 2")
 
 	data := make([]bool, 5)
-	funcs := make([]func(context.Context) error, 0, 5)
+	funcs := make([]AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) error {
@@ -168,7 +168,7 @@ func TestAllCompletedWithTimeoutContext(t *testing.T) {
 	errTimeout := errors.New("timeout")
 
 	data := make([]bool, 5)
-	funcs := make([]func(context.Context) error, 0, 5)
+	funcs := make([]AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) error {

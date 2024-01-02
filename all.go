@@ -14,7 +14,7 @@ import (
 //
 // The index of the function will be -1 if all functions have been completed without error or
 // panic.
-func All(funcs ...func(context.Context) error) (int, error) {
+func All(funcs ...AsyncFn) (int, error) {
 	return all(context.Background(), funcs...)
 }
 
@@ -25,13 +25,13 @@ func All(funcs ...func(context.Context) error) (int, error) {
 //
 // The index of the function will be -1 if all functions have been completed without error or
 // panic, or the context has been canceled (or timeout) before all functions finished.
-func AllWithContext(ctx context.Context, funcs ...func(context.Context) error) (int, error) {
+func AllWithContext(ctx context.Context, funcs ...AsyncFn) (int, error) {
 	return all(ctx, funcs...)
 }
 
 // all executes the functions asynchronously until all functions have been finished, or the context
 // is done (canceled or timeout).
-func all(parent context.Context, funcs ...func(context.Context) error) (int, error) {
+func all(parent context.Context, funcs ...AsyncFn) (int, error) {
 	if len(funcs) == 0 {
 		return -1, nil
 	}
@@ -88,7 +88,7 @@ func all(parent context.Context, funcs ...func(context.Context) error) (int, err
 // AllCompleted executes the functions asynchronously until all functions have been finished. It
 // will return an error slice that is ordered by the functions order, and a boolean value to
 // indicate whether any functions return an error or panic.
-func AllCompleted(funcs ...func(context.Context) error) ([]error, bool) {
+func AllCompleted(funcs ...AsyncFn) ([]error, bool) {
 	return allCompleted(context.Background(), funcs...)
 }
 
@@ -98,7 +98,7 @@ func AllCompleted(funcs ...func(context.Context) error) ([]error, bool) {
 // error or panic.
 func AllCompletedWithContext(
 	ctx context.Context,
-	funcs ...func(context.Context) error,
+	funcs ...AsyncFn,
 ) ([]error, bool) {
 	return allCompleted(ctx, funcs...)
 }
@@ -107,7 +107,7 @@ func AllCompletedWithContext(
 // the context is done (canceled or timeout).
 func allCompleted(
 	parent context.Context,
-	funcs ...func(context.Context) error,
+	funcs ...AsyncFn,
 ) (errs []error, hasError bool) {
 	hasError = false
 	errs = make([]error, len(funcs))

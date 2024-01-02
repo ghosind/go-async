@@ -21,7 +21,7 @@ func TestRace(t *testing.T) {
 	a := assert.New(t)
 
 	data := make([]bool, 5)
-	funcs := make([]func(context.Context) error, 0, 5)
+	funcs := make([]AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) error {
@@ -56,7 +56,7 @@ func TestRaceWithContext(t *testing.T) {
 	a := assert.New(t)
 
 	data := make([]bool, 5)
-	funcs := make([]func(context.Context) error, 0, 5)
+	funcs := make([]AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) error {
