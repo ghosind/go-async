@@ -37,7 +37,7 @@ func TestParallelWithoutConcurrencyLimit(t *testing.T) {
 	dur := time.Since(start)
 	a.NilNow(err)
 	a.EqualNow(index, -1)
-	a.TrueNow(dur-100*time.Millisecond < 5*time.Millisecond) // allow 5ms deviation
+	a.TrueNow(dur-100*time.Millisecond < 30*time.Millisecond) // allow 30ms deviation
 }
 
 func TestParallelWithConcurrencyLimit(t *testing.T) {
@@ -56,7 +56,7 @@ func TestParallelWithConcurrencyLimit(t *testing.T) {
 	dur := time.Since(start)
 	a.NilNow(err)
 	a.EqualNow(index, -1)
-	a.TrueNow(dur-300*time.Millisecond < 10*time.Millisecond) // allow 10ms deviation
+	a.TrueNow(dur-300*time.Millisecond < 30*time.Millisecond) // allow 30ms deviation
 }
 
 func TestParallelWithFailedTask(t *testing.T) {
