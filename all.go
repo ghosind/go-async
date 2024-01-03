@@ -44,26 +44,7 @@ func all(parent context.Context, funcs ...AsyncFn) (int, error) {
 	defer close(ch)
 
 	for i := 0; i < len(funcs); i++ {
-		fn := funcs[i]
-		n := i
-		go func() {
-			childCtx, childCanFunc := context.WithCancel(ctx)
-			defer childCanFunc()
-
-			err := utils.Try(func() error {
-				return fn(childCtx)
-			})
-
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				ch <- executeResult{
-					Error: err,
-					Index: n,
-				}
-			}
-		}()
+		go runTaskInAll(ctx, i, funcs[i], ch)
 	}
 
 	finished := 0
@@ -80,6 +61,26 @@ func all(parent context.Context, funcs ...AsyncFn) (int, error) {
 	}
 
 	return -1, nil
+}
+
+// runTaskInAll runs the specified function for All / AllWithContext.
+func runTaskInAll(ctx context.Context, n int, fn AsyncFn, ch chan<- executeResult) {
+	childCtx, childCanFunc := context.WithCancel(ctx)
+	defer childCanFunc()
+
+	err := utils.Try(func() error {
+		return fn(childCtx)
+	})
+
+	select {
+	case <-ctx.Done():
+		return
+	default:
+		ch <- executeResult{
+			Error: err,
+			Index: n,
+		}
+	}
 }
 
 // AllCompleted executes the functions asynchronously until all functions have been finished. It
@@ -118,9 +119,9 @@ func allCompleted(
 	wg.Add(len(funcs))
 
 	for i := 0; i < len(funcs); i++ {
-		n := i
-		fn := funcs[n]
-		go func() {
+		go func(n int) {
+			fn := funcs[n]
+
 			childCtx, childCanFunc := context.WithCancel(parent)
 			defer childCanFunc()
 			defer wg.Done()
@@ -132,7 +133,7 @@ func allCompleted(
 				hasError = true
 				errs[n] = err
 			}
-		}()
+		}(i)
 	}
 
 	wg.Wait()

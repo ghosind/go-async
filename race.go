@@ -35,10 +35,9 @@ func race(ctx context.Context, funcs ...AsyncFn) (int, error) {
 	defer close(ch)
 
 	for i := 0; i < len(funcs); i++ {
-		fn := funcs[i]
-		n := i
+		go func(n int) {
+			fn := funcs[n]
 
-		go func() {
 			err := utils.Try(func() error {
 				return fn(ctx)
 			})
@@ -48,7 +47,7 @@ func race(ctx context.Context, funcs ...AsyncFn) (int, error) {
 					Error: err,
 				}
 			}
-		}()
+		}(i)
 	}
 
 	ret := <-ch

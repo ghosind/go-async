@@ -93,7 +93,7 @@ func TestAllWithTimeoutContext(t *testing.T) {
 	index, err := AllWithContext(ctx, funcs...)
 	a.NotNilNow(err)
 	a.EqualNow(index, -1)
-	a.Equal(err.Error(), "context canceled")
+	a.TrueNow(errors.Is(err, ErrContextCanceled))
 	a.EqualNow(data, []bool{true, true, false, false, false})
 }
 
