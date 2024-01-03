@@ -35,9 +35,7 @@ func all(parent context.Context, funcs ...AsyncFn) (int, error) {
 		return -1, nil
 	}
 
-	if parent == nil {
-		parent = context.Background()
-	}
+	parent = getContext(parent)
 
 	ctx, canFunc := context.WithCancel(parent)
 	defer canFunc()
@@ -114,9 +112,7 @@ func allCompleted(
 		return
 	}
 
-	if parent == nil {
-		parent = context.Background()
-	}
+	parent = getContext(parent)
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(funcs))

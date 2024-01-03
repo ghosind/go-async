@@ -28,9 +28,7 @@ func race(ctx context.Context, funcs ...AsyncFn) (int, error) {
 		return -1, nil
 	}
 
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	ctx = getContext(ctx)
 
 	finished := atomic.Bool{}
 	ch := make(chan executeResult)

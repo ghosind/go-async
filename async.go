@@ -15,3 +15,13 @@ type executeResult struct {
 	// Index is the index of the function in the parameters list.
 	Index int
 }
+
+// getContext returns the specified non-nil context from the parameter, or creates and returns a
+// new empty context.
+func getContext(ctx context.Context) context.Context {
+	if ctx != nil {
+		return ctx
+	}
+
+	return context.Background()
+}
