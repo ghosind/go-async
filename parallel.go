@@ -2,6 +2,7 @@ package async
 
 import (
 	"context"
+	"sync"
 
 	"github.com/ghosind/utils"
 )
@@ -104,4 +105,87 @@ func runTaskInParallel(
 			Error: err,
 		}
 	}
+}
+
+// ParallelComplete runs the functions asynchronously with the specified concurrency limitation. It
+// returns an error array and a boolean value to indicate whether any function panics or returns an
+// error, and you can get the error details from the error array by the indices of the functions in
+// the parameter list. It will return until all of the functions are finished.
+//
+// The number of concurrency must be greater than or equal to 0, and it means no concurrency
+// limitation if the number is 0.
+func ParallelComplete(concurrency int, funcs ...AsyncFn) ([]error, bool) {
+	return parallelComplete(context.Background(), concurrency, funcs...)
+}
+
+// ParallelCompleteWithContext runs the functions asynchronously with the specified concurrency
+// limitation and the context. It returns an error array and a boolean value to indicate whether
+// any function panics or returns an error, and you can get the error details from the error array
+// by the indices of the functions in the parameter list. It will return until all of the functions
+// are finished.
+//
+// The number of concurrency must be greater than or equal to 0, and it means no concurrency
+// limitation if the number is 0.
+func ParallelCompleteWithContext(
+	ctx context.Context,
+	concurrency int,
+	funcs ...AsyncFn,
+) ([]error, bool) {
+	return parallelComplete(ctx, concurrency, funcs...)
+}
+
+// parallelComplete runs the functions asynchronously with the specified concurrency until all of
+// the functions are finished.
+func parallelComplete(parent context.Context, concurrency int, funcs ...AsyncFn) ([]error, bool) {
+	// the number of concurrency should be 0 (no limitation) or greater than 0.
+	if concurrency < 0 {
+		panic(ErrInvalidConcurrency)
+	}
+
+	errs := make([]error, len(funcs))
+	hasError := false
+
+	if len(funcs) == 0 {
+		return errs, hasError
+	}
+
+	ctx := getContext(parent)
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(funcs))
+
+	var conch chan struct{} // channel for concurrency limit
+	// no concurrency limitation if the value of the number is 0
+	if concurrency > 0 {
+		conch = make(chan struct{}, concurrency)
+	}
+
+	for i := 0; i < len(funcs); i++ {
+		go func(n int) {
+			defer wg.Done()
+
+			if conch != nil {
+				conch <- struct{}{}
+			}
+
+			fn := funcs[n]
+			childCtx, childCanFunc := context.WithCancel(ctx)
+			defer childCanFunc()
+
+			if err := utils.Try(func() error {
+				return fn(childCtx)
+			}); err != nil {
+				errs[n] = err
+				hasError = true
+			}
+
+			if conch != nil {
+				<-conch
+			}
+		}(i)
+	}
+
+	wg.Wait()
+
+	return errs, hasError
 }

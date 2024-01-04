@@ -137,3 +137,149 @@ func TestParallelWithTimedOutContext(t *testing.T) {
 	}
 	a.EqualNow(finishedNum, 2)
 }
+
+func TestParallelComplete(t *testing.T) {
+	a := assert.New(t)
+
+	errs, hasError := ParallelComplete(0)
+	a.NotTrueNow(hasError)
+	a.EqualNow(errs, []error{})
+
+	a.PanicNow(func() {
+		ParallelComplete(-1)
+	})
+}
+
+func TestParallelCompleteWithoutConcurrencyLimit(t *testing.T) {
+	a := assert.New(t)
+
+	funcs := make([]AsyncFn, 0, 5)
+	for i := 0; i < 5; i++ {
+		funcs = append(funcs, func(ctx context.Context) error {
+			time.Sleep(100 * time.Millisecond)
+			return nil
+		})
+	}
+
+	start := time.Now()
+	errs, hasError := ParallelComplete(0, funcs...)
+	dur := time.Since(start)
+	a.NotTrueNow(hasError)
+	a.EqualNow(errs, []error{nil, nil, nil, nil, nil})
+	a.TrueNow(dur-100*time.Millisecond < 30*time.Millisecond) // allow 30ms deviation
+}
+
+func TestParallelCompleteWithConcurrencyLimit(t *testing.T) {
+	a := assert.New(t)
+
+	funcs := make([]AsyncFn, 0, 5)
+	for i := 0; i < 5; i++ {
+		funcs = append(funcs, func(ctx context.Context) error {
+			time.Sleep(100 * time.Millisecond)
+			return nil
+		})
+	}
+
+	start := time.Now()
+	errs, hasError := ParallelComplete(2, funcs...)
+	dur := time.Since(start)
+	a.NotTrueNow(hasError)
+	a.EqualNow(errs, []error{nil, nil, nil, nil, nil})
+	a.TrueNow(dur-300*time.Millisecond < 30*time.Millisecond) // allow 30ms deviation
+}
+
+func TestParallelCompleteWithFailedTask(t *testing.T) {
+	a := assert.New(t)
+
+	expectedErr := errors.New("expected error")
+
+	funcs := make([]AsyncFn, 0, 5)
+	for i := 0; i < 5; i++ {
+		n := i
+		funcs = append(funcs, func(ctx context.Context) error {
+			if n == 2 {
+				time.Sleep(50 * time.Millisecond)
+				return expectedErr
+			} else {
+				time.Sleep(100 * time.Millisecond)
+			}
+			return nil
+		})
+	}
+
+	errs, hasError := ParallelComplete(0, funcs...)
+	a.TrueNow(hasError)
+	a.EqualNow(errs, []error{nil, nil, expectedErr, nil, nil})
+}
+
+func TestParallelCompleteWithContext(t *testing.T) {
+	a := assert.New(t)
+
+	funcs := make([]AsyncFn, 0, 5)
+	res := make([]bool, 5)
+	for i := 0; i < 5; i++ {
+		n := i
+		funcs = append(funcs, func(ctx context.Context) error {
+			time.Sleep(100 * time.Millisecond)
+			res[n] = true
+			return nil
+		})
+	}
+
+	errs, hasError := ParallelCompleteWithContext(context.Background(), 2, funcs...)
+	a.NotTrueNow(hasError)
+	a.EqualNow(errs, []error{nil, nil, nil, nil, nil})
+
+	finishedNum := 0
+	for _, v := range res {
+		if v {
+			finishedNum++
+		}
+	}
+	a.EqualNow(finishedNum, 5)
+}
+
+func TestParallelCompleteWithTimedOutContext(t *testing.T) {
+	a := assert.New(t)
+
+	timeoutErr := errors.New("timed out")
+
+	funcs := make([]AsyncFn, 0, 5)
+	res := make([]bool, 5)
+	for i := 0; i < 5; i++ {
+		n := i
+		funcs = append(funcs, func(ctx context.Context) error {
+			timer := time.NewTimer(100 * time.Millisecond)
+
+			select {
+			case <-ctx.Done():
+				return timeoutErr
+			case <-timer.C:
+				res[n] = true
+				return nil
+			}
+		})
+	}
+
+	ctx, canFunc := context.WithTimeout(context.Background(), 150*time.Millisecond)
+	defer canFunc()
+
+	errs, hasError := ParallelCompleteWithContext(ctx, 2, funcs...)
+	a.TrueNow(hasError)
+
+	numErrors := 0
+	for _, e := range errs {
+		if errors.Is(e, timeoutErr) {
+			numErrors++
+		}
+	}
+	a.EqualNow(numErrors, 3)
+
+	finishedNum := 0
+	for _, v := range res {
+		if v {
+			finishedNum++
+		}
+	}
+	a.EqualNow(finishedNum, 2)
+}
