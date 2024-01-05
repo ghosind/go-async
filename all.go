@@ -40,7 +40,7 @@ func all(parent context.Context, funcs ...AsyncFn) (int, error) {
 	ctx, canFunc := context.WithCancel(parent)
 	defer canFunc()
 
-	ch := make(chan executeResult)
+	ch := make(chan executeResult, len(funcs))
 	defer close(ch)
 
 	for i := 0; i < len(funcs); i++ {

@@ -45,8 +45,8 @@ func parallel(parent context.Context, concurrency int, funcs ...AsyncFn) (int, e
 	ctx, canFunc := context.WithCancel(parent)
 	defer canFunc()
 
-	ch := make(chan executeResult) // channel for result
-	var conch chan empty           // channel for concurrency limit
+	ch := make(chan executeResult, len(funcs)) // channel for result
+	var conch chan empty                       // channel for concurrency limit
 
 	// no concurrency limitation if the value of the number is 0
 	if concurrency > 0 {
