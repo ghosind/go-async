@@ -107,18 +107,18 @@ func runTaskInParallel(
 	}
 }
 
-// ParallelComplete runs the functions asynchronously with the specified concurrency limitation. It
-// returns an error array and a boolean value to indicate whether any function panics or returns an
-// error, and you can get the error details from the error array by the indices of the functions in
-// the parameter list. It will return until all of the functions are finished.
+// ParallelCompleted runs the functions asynchronously with the specified concurrency limitation.
+// It returns an error array and a boolean value to indicate whether any function panics or returns
+// an error, and you can get the error details from the error array by the indices of the functions
+// in the parameter list. It will return until all of the functions are finished.
 //
 // The number of concurrency must be greater than or equal to 0, and it means no concurrency
 // limitation if the number is 0.
-func ParallelComplete(concurrency int, funcs ...AsyncFn) ([]error, bool) {
-	return parallelComplete(context.Background(), concurrency, funcs...)
+func ParallelCompleted(concurrency int, funcs ...AsyncFn) ([]error, bool) {
+	return parallelCompleted(context.Background(), concurrency, funcs...)
 }
 
-// ParallelCompleteWithContext runs the functions asynchronously with the specified concurrency
+// ParallelCompletedWithContext runs the functions asynchronously with the specified concurrency
 // limitation and the context. It returns an error array and a boolean value to indicate whether
 // any function panics or returns an error, and you can get the error details from the error array
 // by the indices of the functions in the parameter list. It will return until all of the functions
@@ -126,17 +126,17 @@ func ParallelComplete(concurrency int, funcs ...AsyncFn) ([]error, bool) {
 //
 // The number of concurrency must be greater than or equal to 0, and it means no concurrency
 // limitation if the number is 0.
-func ParallelCompleteWithContext(
+func ParallelCompletedWithContext(
 	ctx context.Context,
 	concurrency int,
 	funcs ...AsyncFn,
 ) ([]error, bool) {
-	return parallelComplete(ctx, concurrency, funcs...)
+	return parallelCompleted(ctx, concurrency, funcs...)
 }
 
-// parallelComplete runs the functions asynchronously with the specified concurrency until all of
+// parallelCompleted runs the functions asynchronously with the specified concurrency until all of
 // the functions are finished.
-func parallelComplete(parent context.Context, concurrency int, funcs ...AsyncFn) ([]error, bool) {
+func parallelCompleted(parent context.Context, concurrency int, funcs ...AsyncFn) ([]error, bool) {
 	// the number of concurrency should be 0 (no limitation) or greater than 0.
 	if concurrency < 0 {
 		panic(ErrInvalidConcurrency)
