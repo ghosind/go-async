@@ -138,6 +138,17 @@ func TestParallelWithTimedOutContext(t *testing.T) {
 	a.EqualNow(finishedNum, 2)
 }
 
+func BenchmarkParallel(b *testing.B) {
+	tasks := make([]AsyncFn, 0, 1000)
+	for i := 0; i < 1000; i++ {
+		tasks = append(tasks, func(ctx context.Context) error {
+			return nil
+		})
+	}
+
+	Parallel(5, tasks...)
+}
+
 func TestParallelCompleted(t *testing.T) {
 	a := assert.New(t)
 
@@ -282,4 +293,15 @@ func TestParallelCompletedWithTimedOutContext(t *testing.T) {
 		}
 	}
 	a.EqualNow(finishedNum, 2)
+}
+
+func BenchmarkParallelCompleted(b *testing.B) {
+	tasks := make([]AsyncFn, 0, 1000)
+	for i := 0; i < 1000; i++ {
+		tasks = append(tasks, func(ctx context.Context) error {
+			return nil
+		})
+	}
+
+	ParallelCompleted(5, tasks...)
 }

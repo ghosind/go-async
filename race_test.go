@@ -82,3 +82,14 @@ func TestRaceWithContext(t *testing.T) {
 	time.Sleep(300 * time.Millisecond)
 	a.EqualNow(data, []bool{true, true, true, false, false})
 }
+
+func BenchmarkRace(b *testing.B) {
+	tasks := make([]AsyncFn, 0, 1000)
+	for i := 0; i < 1000; i++ {
+		tasks = append(tasks, func(ctx context.Context) error {
+			return nil
+		})
+	}
+
+	Race(tasks...)
+}

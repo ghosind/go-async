@@ -97,6 +97,17 @@ func TestAllWithTimeoutContext(t *testing.T) {
 	a.EqualNow(data, []bool{true, true, false, false, false})
 }
 
+func BenchmarkAll(b *testing.B) {
+	tasks := make([]AsyncFn, 0, 1000)
+	for i := 0; i < 1000; i++ {
+		tasks = append(tasks, func(ctx context.Context) error {
+			return nil
+		})
+	}
+
+	All(tasks...)
+}
+
 func TestAllCompletedWithoutFuncs(t *testing.T) {
 	a := assert.New(t)
 
@@ -190,4 +201,15 @@ func TestAllCompletedWithTimeoutContext(t *testing.T) {
 	a.TrueNow(hasError)
 	a.EqualNow(data, []bool{true, true, false, false, false})
 	a.EqualNow(errs, []error{nil, nil, errTimeout, errTimeout, errTimeout})
+}
+
+func BenchmarkAllCompleted(b *testing.B) {
+	tasks := make([]AsyncFn, 0, 1000)
+	for i := 0; i < 1000; i++ {
+		tasks = append(tasks, func(ctx context.Context) error {
+			return nil
+		})
+	}
+
+	AllCompleted(tasks...)
 }
