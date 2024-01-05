@@ -16,6 +16,9 @@ type executeResult struct {
 	Index int
 }
 
+// empty is a smallest cost struct.
+type empty struct{}
+
 // getContext returns the specified non-nil context from the parameter, or creates and returns a
 // new empty context.
 func getContext(ctx context.Context) context.Context {

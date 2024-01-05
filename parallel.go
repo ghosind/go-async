@@ -46,11 +46,11 @@ func parallel(parent context.Context, concurrency int, funcs ...AsyncFn) (int, e
 	defer canFunc()
 
 	ch := make(chan executeResult) // channel for result
-	var conch chan struct{}        // channel for concurrency limit
+	var conch chan empty           // channel for concurrency limit
 
 	// no concurrency limitation if the value of the number is 0
 	if concurrency > 0 {
-		conch = make(chan struct{}, concurrency)
+		conch = make(chan empty, concurrency)
 	}
 
 	for i := 0; i < len(funcs); i++ {
@@ -78,11 +78,11 @@ func runTaskInParallel(
 	ctx context.Context,
 	n int,
 	fn AsyncFn,
-	conch chan struct{},
+	conch chan empty,
 	ch chan executeResult,
 ) {
 	if conch != nil {
-		conch <- struct{}{}
+		conch <- empty{}
 	}
 
 	childCtx, childCanFunc := context.WithCancel(ctx)
@@ -154,10 +154,10 @@ func parallelComplete(parent context.Context, concurrency int, funcs ...AsyncFn)
 	wg := sync.WaitGroup{}
 	wg.Add(len(funcs))
 
-	var conch chan struct{} // channel for concurrency limit
+	var conch chan empty // channel for concurrency limit
 	// no concurrency limitation if the value of the number is 0
 	if concurrency > 0 {
-		conch = make(chan struct{}, concurrency)
+		conch = make(chan empty, concurrency)
 	}
 
 	for i := 0; i < len(funcs); i++ {
@@ -165,7 +165,7 @@ func parallelComplete(parent context.Context, concurrency int, funcs ...AsyncFn)
 			defer wg.Done()
 
 			if conch != nil {
-				conch <- struct{}{}
+				conch <- empty{}
 			}
 
 			fn := funcs[n]
