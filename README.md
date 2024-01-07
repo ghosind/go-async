@@ -62,3 +62,21 @@ index, err := async.Race(func (ctx context.Context) error {
 // index = 0 if the request is finished within one second.
 // index = 1 if the request is finished after one second.
 ```
+
+To run all functions asynchronously but with the specified concurrency limitation, you can use the `Parallel` function. The `Parallel` function accepts a number that the concurrency limitation and the list of functions to run. The number of the concurrency limitation must be greater than or equal to 0, and it has the same effect as the `All` function if the number is 0.
+
+```go
+// Run 2 functions asynchronously at the time.
+async.Parallel(2, func (ctx context.Context) error {
+  // Do something
+  return nil
+}, func (ctx context.Context) error {
+  // Do something
+  return nil
+}, func (ctx context.Context) error {
+  // Do something
+  return nil
+}/* , ... */)
+```
+
+The `Parallel` will also be terminated if any function panics or returns an error. If you do not want to terminate the execution of other functions, you can try to use `ParallelCompleted`. The `ParallelCompleted` function will run all functions until all functions are finished. It will return the errors list and a boolean value to indicate whether any function errored.
