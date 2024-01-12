@@ -3,8 +3,6 @@ package async
 import (
 	"context"
 	"sync"
-
-	"github.com/ghosind/utils"
 )
 
 // Parallel runs the functions asynchronously with the specified concurrency limitation. It will
@@ -36,6 +34,7 @@ func parallel(parent context.Context, concurrency int, funcs ...AsyncFn) (int, e
 	if concurrency < 0 {
 		panic(ErrInvalidConcurrency)
 	}
+	validateAsyncFuncs(funcs...)
 
 	if len(funcs) == 0 {
 		return -1, nil
@@ -90,9 +89,7 @@ func runTaskInParallel(
 	childCtx, childCanFunc := context.WithCancel(ctx)
 	defer childCanFunc()
 
-	err := utils.Try(func() error {
-		return fn(childCtx)
-	})
+	ret, err := invokeAsyncFn(fn, childCtx, nil)
 
 	if conch != nil {
 		<-conch
@@ -105,6 +102,7 @@ func runTaskInParallel(
 		ch <- executeResult{
 			Index: n,
 			Error: err,
+			Out:   ret,
 		}
 	}
 }
@@ -143,6 +141,7 @@ func parallelCompleted(parent context.Context, concurrency int, funcs ...AsyncFn
 	if concurrency < 0 {
 		panic(ErrInvalidConcurrency)
 	}
+	validateAsyncFuncs(funcs...)
 
 	errs := make([]error, len(funcs))
 	hasError := false
@@ -174,9 +173,8 @@ func parallelCompleted(parent context.Context, concurrency int, funcs ...AsyncFn
 			childCtx, childCanFunc := context.WithCancel(ctx)
 			defer childCanFunc()
 
-			if err := utils.Try(func() error {
-				return fn(childCtx)
-			}); err != nil {
+			_, err := invokeAsyncFn(fn, childCtx, nil)
+			if err != nil {
 				errs[n] = err
 				hasError = true
 			}

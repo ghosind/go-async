@@ -8,4 +8,6 @@ var (
 	// ErrInvalidConcurrency to indicate the number of the concurrency limitation is an invalid
 	// value.
 	ErrInvalidConcurrency error = errors.New("invalid concurrency")
+	// ErrNotFunction indicates the value is not a function.
+	ErrNotFunction error = errors.New("not function")
 )
