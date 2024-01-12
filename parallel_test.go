@@ -68,17 +68,22 @@ func TestParallelWithFailedTask(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) error {
-			time.Sleep(100 * time.Millisecond)
 			if n == 2 {
+				time.Sleep(50 * time.Millisecond)
 				return expectedErr
+			} else {
+				time.Sleep(100 * time.Millisecond)
+				return nil
 			}
-			return nil
 		})
 	}
 
+	start := time.Now()
 	index, err := Parallel(2, funcs...)
+	dur := time.Since(start)
 	a.EqualNow(err, expectedErr)
 	a.EqualNow(index, 2)
+	a.TrueNow(dur-150*time.Millisecond < 30*time.Millisecond) // allow 30ms deviation
 }
 
 func TestParallelWithContext(t *testing.T) {
@@ -128,14 +133,7 @@ func TestParallelWithTimedOutContext(t *testing.T) {
 	index, err := ParallelWithContext(ctx, 2, funcs...)
 	a.TrueNow(errors.Is(err, ErrContextCanceled))
 	a.EqualNow(index, -1)
-
-	finishedNum := 0
-	for _, v := range res {
-		if v {
-			finishedNum++
-		}
-	}
-	a.EqualNow(finishedNum, 2)
+	a.EqualNow(res, []bool{true, true, false, false, false})
 }
 
 func BenchmarkParallel(b *testing.B) {

@@ -53,9 +53,15 @@ func parallel(parent context.Context, concurrency int, funcs ...AsyncFn) (int, e
 		conch = make(chan empty, concurrency)
 	}
 
-	for i := 0; i < len(funcs); i++ {
-		go runTaskInParallel(ctx, i, funcs[i], conch, ch)
-	}
+	go func() {
+		for i := 0; i < len(funcs); i++ {
+			if conch != nil {
+				conch <- empty{}
+			}
+
+			go runTaskInParallel(ctx, i, funcs[i], conch, ch)
+		}
+	}()
 
 	finished := 0
 	for finished < len(funcs) {
@@ -81,10 +87,6 @@ func runTaskInParallel(
 	conch chan empty,
 	ch chan executeResult,
 ) {
-	if conch != nil {
-		conch <- empty{}
-	}
-
 	childCtx, childCanFunc := context.WithCancel(ctx)
 	defer childCanFunc()
 
