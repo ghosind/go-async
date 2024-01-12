@@ -1,6 +1,6 @@
 module github.com/ghosind/go-async
 
-go 1.17
+go 1.18
 
 require (
 	github.com/ghosind/go-assert v0.2.1
