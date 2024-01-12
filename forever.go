@@ -3,8 +3,6 @@ package async
 import (
 	"context"
 	"sync"
-
-	"github.com/ghosind/utils"
 )
 
 // ForeverFn is the function to run in the Forever function.
@@ -31,6 +29,7 @@ func forever(
 	parent context.Context,
 	fn ForeverFn,
 ) error {
+	validateAsyncFuncs(fn)
 	ctx := getContext(parent)
 	nextCtx := ctx
 
@@ -44,9 +43,7 @@ func forever(
 
 		ctx = nextCtx
 
-		err := utils.Try(func() error {
-			return fn(ctx, next)
-		})
+		_, err := invokeAsyncFn(fn, ctx, []any{next})
 		if err != nil {
 			return err
 		}

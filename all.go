@@ -3,8 +3,6 @@ package async
 import (
 	"context"
 	"sync"
-
-	"github.com/ghosind/utils"
 )
 
 // All executes the functions asynchronously until all functions have been finished. If some
@@ -34,6 +32,7 @@ func all(parent context.Context, funcs ...AsyncFn) (int, error) {
 	if len(funcs) == 0 {
 		return -1, nil
 	}
+	validateAsyncFuncs(funcs...)
 
 	parent = getContext(parent)
 
@@ -68,9 +67,7 @@ func runTaskInAll(ctx context.Context, n int, fn AsyncFn, ch chan<- executeResul
 	childCtx, childCanFunc := context.WithCancel(ctx)
 	defer childCanFunc()
 
-	err := utils.Try(func() error {
-		return fn(childCtx)
-	})
+	ret, err := invokeAsyncFn(fn, childCtx, nil)
 
 	select {
 	case <-ctx.Done():
@@ -79,6 +76,7 @@ func runTaskInAll(ctx context.Context, n int, fn AsyncFn, ch chan<- executeResul
 		ch <- executeResult{
 			Error: err,
 			Index: n,
+			Out:   ret,
 		}
 	}
 }
@@ -107,6 +105,8 @@ func allCompleted(
 	parent context.Context,
 	funcs ...AsyncFn,
 ) (errs []error, hasError bool) {
+	validateAsyncFuncs(funcs...)
+
 	hasError = false
 	errs = make([]error, len(funcs))
 	if len(funcs) == 0 {
@@ -126,9 +126,7 @@ func allCompleted(
 			defer childCanFunc()
 			defer wg.Done()
 
-			err := utils.Try(func() error {
-				return fn(childCtx)
-			})
+			_, err := invokeAsyncFn(fn, childCtx, nil)
 			if err != nil {
 				hasError = true
 				errs[n] = err
