@@ -11,7 +11,7 @@ import (
 //
 // The index of the function will be -1 if all functions have been completed without error or
 // panic.
-func All(funcs ...AsyncFn) (int, error) {
+func All(funcs ...AsyncFn) ([][]any, int, error) {
 	return all(context.Background(), funcs...)
 }
 
@@ -22,15 +22,15 @@ func All(funcs ...AsyncFn) (int, error) {
 //
 // The index of the function will be -1 if all functions have been completed without error or
 // panic, or the context has been canceled (or timeout) before all functions finished.
-func AllWithContext(ctx context.Context, funcs ...AsyncFn) (int, error) {
+func AllWithContext(ctx context.Context, funcs ...AsyncFn) ([][]any, int, error) {
 	return all(ctx, funcs...)
 }
 
 // all executes the functions asynchronously until all functions have been finished, or the context
 // is done (canceled or timeout).
-func all(parent context.Context, funcs ...AsyncFn) (int, error) {
+func all(parent context.Context, funcs ...AsyncFn) ([][]any, int, error) {
 	if len(funcs) == 0 {
-		return -1, nil
+		return nil, -1, nil
 	}
 	validateAsyncFuncs(funcs...)
 
@@ -47,19 +47,22 @@ func all(parent context.Context, funcs ...AsyncFn) (int, error) {
 	}
 
 	finished := 0
+	out := make([][]any, len(funcs))
 	for finished < len(funcs) {
 		select {
 		case <-parent.Done():
-			return -1, ErrContextCanceled
+			return nil, -1, ErrContextCanceled
 		case ret := <-ch:
 			if ret.Error != nil {
-				return ret.Index, ret.Error
+				return nil, ret.Index, ret.Error
+			} else {
+				out[ret.Index] = ret.Out
 			}
 			finished++
 		}
 	}
 
-	return -1, nil
+	return out, -1, nil
 }
 
 // runTaskInAll runs the specified function for All / AllWithContext.
