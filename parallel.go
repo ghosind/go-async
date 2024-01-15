@@ -162,12 +162,12 @@ func parallelCompleted(parent context.Context, concurrency int, funcs ...AsyncFn
 	}
 
 	for i := 0; i < len(funcs); i++ {
+		if conch != nil {
+			conch <- empty{}
+		}
+
 		go func(n int) {
 			defer wg.Done()
-
-			if conch != nil {
-				conch <- empty{}
-			}
 
 			fn := funcs[n]
 			childCtx, childCanFunc := context.WithCancel(ctx)
