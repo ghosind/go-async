@@ -36,11 +36,12 @@ func TestAllSuccess(t *testing.T) {
 	a.NilNow(err)
 	a.EqualNow(index, -1)
 	a.EqualNow(data, []bool{true, true, true, true, true})
-	a.EqualNow(out, [][]any{{0}, {1}, {2}, {3}, {4}})
+	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
 }
 
 func TestAllFailure(t *testing.T) {
 	a := assert.New(t)
+	expectedErr := errors.New("n = 2")
 
 	data := make([]bool, 5)
 	funcs := make([]AsyncFn, 0, 5)
@@ -49,7 +50,7 @@ func TestAllFailure(t *testing.T) {
 		funcs = append(funcs, func(ctx context.Context) error {
 			time.Sleep(time.Duration(n*100) * time.Millisecond)
 			if n == 2 {
-				return errors.New("n = 2")
+				return expectedErr
 			}
 			data[n] = true
 			return nil
@@ -59,9 +60,9 @@ func TestAllFailure(t *testing.T) {
 	out, index, err := All(funcs...)
 	a.NotNilNow(err)
 	a.EqualNow(index, 2)
-	a.EqualNow(err.Error(), "n = 2")
+	a.EqualNow(err, expectedErr)
 	a.EqualNow(data, []bool{true, true, false, false, false})
-	a.NilNow(out)
+	a.EqualNow(out, [][]any{{nil}, {nil}, {expectedErr}, nil, nil})
 }
 
 func TestAllWithNilContext(t *testing.T) {
@@ -74,7 +75,7 @@ func TestAllWithNilContext(t *testing.T) {
 	})
 	a.NilNow(err)
 	a.EqualNow(index, -1)
-	a.EqualNow(out, [][]any{{}})
+	a.EqualNow(out, [][]any{{nil}})
 }
 
 func TestAllWithTimeoutContext(t *testing.T) {
@@ -99,7 +100,7 @@ func TestAllWithTimeoutContext(t *testing.T) {
 	a.EqualNow(index, -1)
 	a.TrueNow(errors.Is(err, ErrContextCanceled))
 	a.EqualNow(data, []bool{true, true, false, false, false})
-	a.NilNow(out)
+	a.EqualNow(out, [][]any{{nil}, {nil}, nil, nil, nil})
 }
 
 func BenchmarkAll(b *testing.B) {

@@ -51,12 +51,11 @@ func all(parent context.Context, funcs ...AsyncFn) ([][]any, int, error) {
 	for finished < len(funcs) {
 		select {
 		case <-parent.Done():
-			return nil, -1, ErrContextCanceled
+			return out, -1, ErrContextCanceled
 		case ret := <-ch:
+			out[ret.Index] = ret.Out
 			if ret.Error != nil {
-				return nil, ret.Index, ret.Error
-			} else {
-				out[ret.Index] = ret.Out
+				return out, ret.Index, ret.Error
 			}
 			finished++
 		}
