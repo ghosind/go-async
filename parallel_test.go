@@ -288,16 +288,10 @@ func TestParallelCompletedWithTimedOutContext(t *testing.T) {
 	ctx, canFunc := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer canFunc()
 
-	_, errs, hasError := ParallelCompletedWithContext(ctx, 2, funcs...)
+	out, errs, hasError := ParallelCompletedWithContext(ctx, 2, funcs...)
 	a.TrueNow(hasError)
-
-	numErrors := 0
-	for _, e := range errs {
-		if errors.Is(e, timeoutErr) {
-			numErrors++
-		}
-	}
-	a.EqualNow(numErrors, 3)
+	a.EqualNow(errs, []error{nil, nil, timeoutErr, timeoutErr, timeoutErr})
+	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, timeoutErr}, {3, timeoutErr}, {4, timeoutErr}})
 
 	finishedNum := 0
 	for _, v := range res {
