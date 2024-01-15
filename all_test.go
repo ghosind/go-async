@@ -117,9 +117,10 @@ func BenchmarkAll(b *testing.B) {
 func TestAllCompletedWithoutFuncs(t *testing.T) {
 	a := assert.New(t)
 
-	errs, hasError := AllCompleted()
+	out, errs, hasError := AllCompleted()
 	a.NotTrueNow(hasError)
 	a.EqualNow(errs, []error{})
+	a.EqualNow(out, [][]any{})
 }
 
 func TestAllCompletedSuccess(t *testing.T) {
@@ -129,17 +130,18 @@ func TestAllCompletedSuccess(t *testing.T) {
 	funcs := make([]AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
-		funcs = append(funcs, func(ctx context.Context) error {
+		funcs = append(funcs, func(ctx context.Context) (int, error) {
 			time.Sleep(time.Duration(n*100) * time.Millisecond)
 			data[n] = true
-			return nil
+			return n, nil
 		})
 	}
 
-	errs, hasError := AllCompleted(funcs...)
+	out, errs, hasError := AllCompleted(funcs...)
 	a.NotTrueNow(hasError)
 	a.EqualNow(data, []bool{true, true, true, true, true})
 	a.EqualNow(errs, []error{nil, nil, nil, nil, nil})
+	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
 }
 
 func TestAllCompletedPartialFailure(t *testing.T) {
@@ -151,32 +153,34 @@ func TestAllCompletedPartialFailure(t *testing.T) {
 	funcs := make([]AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
-		funcs = append(funcs, func(ctx context.Context) error {
+		funcs = append(funcs, func(ctx context.Context) (int, error) {
 			time.Sleep(time.Duration(n*100) * time.Millisecond)
 			if n == 2 {
-				return errNIs2
+				return n, errNIs2
 			}
 			data[n] = true
-			return nil
+			return n, nil
 		})
 	}
 
-	errs, hasError := AllCompleted(funcs...)
+	out, errs, hasError := AllCompleted(funcs...)
 	a.TrueNow(hasError)
 	a.EqualNow(data, []bool{true, true, false, true, true})
 	a.EqualNow(errs, []error{nil, nil, errNIs2, nil, nil})
+	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, errNIs2}, {3, nil}, {4, nil}})
 }
 
 func TestAllCompletedWithNilContext(t *testing.T) {
 	a := assert.New(t)
 
 	//lint:ignore SA1012 for test case only
-	errs, hasError := AllCompletedWithContext(nil, func(ctx context.Context) error {
+	out, errs, hasError := AllCompletedWithContext(nil, func(ctx context.Context) error {
 		time.Sleep(100 * time.Millisecond)
 		return nil
 	})
 	a.NotTrueNow(hasError)
 	a.EqualNow(errs, []error{nil})
+	a.EqualNow(out, [][]any{{nil}})
 }
 
 func TestAllCompletedWithTimeoutContext(t *testing.T) {
@@ -188,14 +192,14 @@ func TestAllCompletedWithTimeoutContext(t *testing.T) {
 	funcs := make([]AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
-		funcs = append(funcs, func(ctx context.Context) error {
+		funcs = append(funcs, func(ctx context.Context) (int, error) {
 			time.Sleep(time.Duration(n*100) * time.Millisecond)
 			select {
 			case <-ctx.Done():
-				return errTimeout
+				return n, errTimeout
 			default:
 				data[n] = true
-				return nil
+				return n, nil
 			}
 		})
 	}
@@ -203,10 +207,11 @@ func TestAllCompletedWithTimeoutContext(t *testing.T) {
 	ctx, canFunc := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer canFunc()
 
-	errs, hasError := AllCompletedWithContext(ctx, funcs...)
+	out, errs, hasError := AllCompletedWithContext(ctx, funcs...)
 	a.TrueNow(hasError)
 	a.EqualNow(data, []bool{true, true, false, false, false})
 	a.EqualNow(errs, []error{nil, nil, errTimeout, errTimeout, errTimeout})
+	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, errTimeout}, {3, errTimeout}, {4, errTimeout}})
 }
 
 func BenchmarkAllCompleted(b *testing.B) {

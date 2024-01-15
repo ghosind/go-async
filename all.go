@@ -86,7 +86,7 @@ func runTaskInAll(ctx context.Context, n int, fn AsyncFn, ch chan<- executeResul
 // AllCompleted executes the functions asynchronously until all functions have been finished. It
 // will return an error slice that is ordered by the functions order, and a boolean value to
 // indicate whether any functions return an error or panic.
-func AllCompleted(funcs ...AsyncFn) ([]error, bool) {
+func AllCompleted(funcs ...AsyncFn) ([][]any, []error, bool) {
 	return allCompleted(context.Background(), funcs...)
 }
 
@@ -97,7 +97,7 @@ func AllCompleted(funcs ...AsyncFn) ([]error, bool) {
 func AllCompletedWithContext(
 	ctx context.Context,
 	funcs ...AsyncFn,
-) ([]error, bool) {
+) ([][]any, []error, bool) {
 	return allCompleted(ctx, funcs...)
 }
 
@@ -106,11 +106,12 @@ func AllCompletedWithContext(
 func allCompleted(
 	parent context.Context,
 	funcs ...AsyncFn,
-) (errs []error, hasError bool) {
+) (out [][]any, errs []error, hasError bool) {
 	validateAsyncFuncs(funcs...)
 
 	hasError = false
 	errs = make([]error, len(funcs))
+	out = make([][]any, len(funcs))
 	if len(funcs) == 0 {
 		return
 	}
@@ -128,11 +129,12 @@ func allCompleted(
 			defer childCanFunc()
 			defer wg.Done()
 
-			_, err := invokeAsyncFn(fn, childCtx, nil)
+			ret, err := invokeAsyncFn(fn, childCtx, nil)
 			if err != nil {
 				hasError = true
 				errs[n] = err
 			}
+			out[n] = ret
 		}(i)
 	}
 
