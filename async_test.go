@@ -73,15 +73,15 @@ func TestInvokeAsyncFn(t *testing.T) {
 
 	ret, err = invokeAsyncFn(func() { panic(expectErr) }, ctx, nil)
 	a.EqualNow(err, expectErr)
-	a.NilNow(ret)
+	a.EqualNow(ret, []any{})
 
 	ret, err = invokeAsyncFn(func() error { return nil }, ctx, nil)
 	a.NilNow(err)
-	a.EqualNow(ret, []any{})
+	a.EqualNow(ret, []any{nil})
 
 	ret, err = invokeAsyncFn(func() error { return expectErr }, ctx, nil)
 	a.EqualNow(err, expectErr)
-	a.EqualNow(ret, []any{})
+	a.EqualNow(ret, []any{expectErr})
 
 	ret, err = invokeAsyncFn(func() int { return 1 }, ctx, nil)
 	a.NilNow(err)
@@ -89,13 +89,13 @@ func TestInvokeAsyncFn(t *testing.T) {
 
 	ret, err = invokeAsyncFn(func() (int, error) { return 1, nil }, ctx, nil)
 	a.NilNow(err)
-	a.EqualNow(ret, []any{1})
+	a.EqualNow(ret, []any{1, nil})
 
 	ret, err = invokeAsyncFn(func() (int, error) { return 1, expectErr }, ctx, nil)
 	a.EqualNow(err, expectErr)
-	a.EqualNow(ret, []any{1})
+	a.EqualNow(ret, []any{1, expectErr})
 
 	ret, err = invokeAsyncFn(func() (int, string, error) { return 1, "test", nil }, ctx, nil)
 	a.NilNow(err)
-	a.EqualNow(ret, []any{1, "test"})
+	a.EqualNow(ret, []any{1, "test", nil})
 }

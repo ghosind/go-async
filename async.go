@@ -105,23 +105,22 @@ func invokeAsyncFn(fn AsyncFn, ctx context.Context, params []any) ([]any, error)
 		in = append(in, reflect.ValueOf(v))
 	}
 
+	numRet := ft.NumOut()
+	ret := make([]any, 0, numRet)
+
 	err := utils.Try(func() error {
 		out = fv.Call(in)
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return ret, err
 	}
 
-	ret := make([]any, 0, len(out))
-	numRet := len(out)
-
 	if isFuncReturnsError(ft) {
-		numRet--
-		if out[numRet].IsNil() {
+		if out[numRet-1].IsNil() {
 			err = nil
 		} else {
-			err = out[numRet].Interface().(error)
+			err = out[numRet-1].Interface().(error)
 		}
 	}
 	for i := 0; i < numRet; i++ {
