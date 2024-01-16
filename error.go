@@ -1,8 +1,10 @@
 package async
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 var (
@@ -44,4 +46,19 @@ func (e *executionError) Err() error {
 // Error returns the execution error message.
 func (e *executionError) Error() string {
 	return fmt.Sprintf("function %d error: %s", e.index, e.err)
+}
+
+// ExecutionErrors is an array of ExecutionError.
+type ExecutionErrors []ExecutionError
+
+// Error combines and returns all of the execution errors' message.
+func (ee ExecutionErrors) Error() string {
+	buf := bytes.NewBufferString("")
+
+	for _, e := range ee {
+		buf.WriteString(e.Error())
+		buf.WriteByte('\n')
+	}
+
+	return strings.TrimSpace(buf.String())
 }
