@@ -12,9 +12,8 @@ import (
 func TestAllWithoutFuncs(t *testing.T) {
 	a := assert.New(t)
 
-	out, index, err := All()
+	out, err := All()
 	a.NilNow(err)
-	a.EqualNow(index, -1)
 	a.NilNow(out)
 }
 
@@ -32,9 +31,8 @@ func TestAllSuccess(t *testing.T) {
 		})
 	}
 
-	out, index, err := All(funcs...)
+	out, err := All(funcs...)
 	a.NilNow(err)
-	a.EqualNow(index, -1)
 	a.EqualNow(data, []bool{true, true, true, true, true})
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
 }
@@ -57,10 +55,9 @@ func TestAllFailure(t *testing.T) {
 		})
 	}
 
-	out, index, err := All(funcs...)
+	out, err := All(funcs...)
 	a.NotNilNow(err)
-	a.EqualNow(index, 2)
-	a.EqualNow(err, expectedErr)
+	a.EqualNow(err.Error(), "function 2 error: n = 2")
 	a.EqualNow(data, []bool{true, true, false, false, false})
 	a.EqualNow(out, [][]any{{nil}, {nil}, {expectedErr}, nil, nil})
 }
@@ -69,12 +66,11 @@ func TestAllWithNilContext(t *testing.T) {
 	a := assert.New(t)
 
 	//lint:ignore SA1012 for test case only
-	out, index, err := AllWithContext(nil, func(ctx context.Context) error {
+	out, err := AllWithContext(nil, func(ctx context.Context) error {
 		time.Sleep(100 * time.Millisecond)
 		return nil
 	})
 	a.NilNow(err)
-	a.EqualNow(index, -1)
 	a.EqualNow(out, [][]any{{nil}})
 }
 
@@ -95,9 +91,8 @@ func TestAllWithTimeoutContext(t *testing.T) {
 	ctx, canFunc := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer canFunc()
 
-	out, index, err := AllWithContext(ctx, funcs...)
+	out, err := AllWithContext(ctx, funcs...)
 	a.NotNilNow(err)
-	a.EqualNow(index, -1)
 	a.TrueNow(errors.Is(err, ErrContextCanceled))
 	a.EqualNow(data, []bool{true, true, false, false, false})
 	a.EqualNow(out, [][]any{{nil}, {nil}, nil, nil, nil})

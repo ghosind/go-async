@@ -6,31 +6,31 @@ import (
 )
 
 // All executes the functions asynchronously until all functions have been finished. If some
-// function returns an error or panic, it will immediately return the index of the function and the
-// error, and send a cancel signal to all other functions by context.
+// function returns an error or panic, it will immediately return an execution error, and send a
+// cancel signal to all other functions by context.
 //
 // The index of the function will be -1 if all functions have been completed without error or
 // panic.
-func All(funcs ...AsyncFn) ([][]any, int, error) {
+func All(funcs ...AsyncFn) ([][]any, error) {
 	return all(context.Background(), funcs...)
 }
 
 // AllWithContext executes the functions asynchronously until all functions have been finished, or
 // the context is done (canceled or timeout). If some function returns an error or panic, it will
-// immediately return the index of the index and the error and send a cancel signal to all other
-// functions by context.
+// immediately return an execution error and send a cancel signal to all other functions by
+// context.
 //
 // The index of the function will be -1 if all functions have been completed without error or
 // panic, or the context has been canceled (or timeout) before all functions finished.
-func AllWithContext(ctx context.Context, funcs ...AsyncFn) ([][]any, int, error) {
+func AllWithContext(ctx context.Context, funcs ...AsyncFn) ([][]any, error) {
 	return all(ctx, funcs...)
 }
 
 // all executes the functions asynchronously until all functions have been finished, or the context
 // is done (canceled or timeout).
-func all(parent context.Context, funcs ...AsyncFn) ([][]any, int, error) {
+func all(parent context.Context, funcs ...AsyncFn) ([][]any, error) {
 	if len(funcs) == 0 {
-		return nil, -1, nil
+		return nil, nil
 	}
 	validateAsyncFuncs(funcs...)
 
@@ -51,17 +51,20 @@ func all(parent context.Context, funcs ...AsyncFn) ([][]any, int, error) {
 	for finished < len(funcs) {
 		select {
 		case <-parent.Done():
-			return out, -1, ErrContextCanceled
+			return out, ErrContextCanceled
 		case ret := <-ch:
 			out[ret.Index] = ret.Out
 			if ret.Error != nil {
-				return out, ret.Index, ret.Error
+				return out, &executionError{
+					index: ret.Index,
+					err:   ret.Error,
+				}
 			}
 			finished++
 		}
 	}
 
-	return out, -1, nil
+	return out, nil
 }
 
 // runTaskInAll runs the specified function for All / AllWithContext.

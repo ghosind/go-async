@@ -49,6 +49,12 @@ func race(ctx context.Context, funcs ...AsyncFn) ([]any, int, error) {
 	}
 
 	ret := <-ch
+	if ret.Error != nil {
+		return ret.Out, ret.Index, &executionError{
+			index: ret.Index,
+			err:   ret.Error,
+		}
+	}
 
-	return ret.Out, ret.Index, ret.Error
+	return ret.Out, ret.Index, nil
 }

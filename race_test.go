@@ -42,6 +42,37 @@ func TestRace(t *testing.T) {
 	a.EqualNow(data, []bool{true, true, true, true, true})
 }
 
+func TestRaceWithFailed(t *testing.T) {
+	a := assert.New(t)
+
+	data := make([]bool, 5)
+	funcs := make([]AsyncFn, 0, 5)
+	expectedErr := errors.New("expected error")
+	for i := 0; i < 5; i++ {
+		n := i
+		funcs = append(funcs, func(ctx context.Context) (int, error) {
+			if n == 2 {
+				time.Sleep(25 * time.Millisecond)
+				return n, expectedErr
+			} else {
+				time.Sleep(time.Duration((n+1)*50) * time.Millisecond)
+				data[n] = true
+				return n, nil
+			}
+		})
+	}
+
+	out, index, err := Race(funcs...)
+	a.NotNilNow(err)
+	a.EqualNow(err.Error(), "function 2 error: expected error")
+	a.EqualNow(index, 2)
+	a.EqualNow(data, []bool{false, false, false, false, false})
+	a.EqualNow(out, []any{2, expectedErr})
+
+	time.Sleep(300 * time.Millisecond)
+	a.EqualNow(data, []bool{true, true, false, true, true})
+}
+
 func TestRaceWithNilContext(t *testing.T) {
 	a := assert.New(t)
 
