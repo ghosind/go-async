@@ -27,9 +27,13 @@ type ExecutionError interface {
 	Error() string
 }
 
+// executionError is the error to represents the error of the function that is returned or
+// panicked, and the index of the function in the parameters list.
 type executionError struct {
+	// index is the index of the function in the parameters list.
 	index int
-	err   error
+	// err is the error that the function returned or panicked.
+	err error
 }
 
 // Index returns the function's index in the parameters list that the function had returned an
@@ -61,4 +65,32 @@ func (ee ExecutionErrors) Error() string {
 	}
 
 	return strings.TrimSpace(buf.String())
+}
+
+// convertErrorListToExecutionErrors converts an array of the errors to the ExecutionErrors, it
+// will set the index as the execution error's index. If the error in the list is nil, it will skip
+// it and not add the error to the ExecutionErrors.
+func convertErrorListToExecutionErrors(errs []error, num int) ExecutionErrors {
+	if num == 0 {
+		num = len(errs)
+	}
+
+	ee := make(ExecutionErrors, 0, num)
+
+	for i, e := range errs {
+		if e == nil {
+			continue
+		}
+
+		ee = append(ee, &executionError{
+			index: i,
+			err:   e,
+		})
+	}
+
+	if len(ee) == 0 {
+		return nil
+	}
+
+	return ee
 }
