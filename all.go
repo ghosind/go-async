@@ -3,6 +3,7 @@ package async
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 )
 
 // All executes the functions asynchronously until all functions have been finished. If some
@@ -89,7 +90,7 @@ func runTaskInAll(ctx context.Context, n int, fn AsyncFn, ch chan<- executeResul
 // AllCompleted executes the functions asynchronously until all functions have been finished. It
 // will return an error slice that is ordered by the functions order, and a boolean value to
 // indicate whether any functions return an error or panic.
-func AllCompleted(funcs ...AsyncFn) ([][]any, []error, bool) {
+func AllCompleted(funcs ...AsyncFn) ([][]any, error) {
 	return allCompleted(context.Background(), funcs...)
 }
 
@@ -100,7 +101,7 @@ func AllCompleted(funcs ...AsyncFn) ([][]any, []error, bool) {
 func AllCompletedWithContext(
 	ctx context.Context,
 	funcs ...AsyncFn,
-) ([][]any, []error, bool) {
+) ([][]any, error) {
 	return allCompleted(ctx, funcs...)
 }
 
@@ -109,17 +110,18 @@ func AllCompletedWithContext(
 func allCompleted(
 	parent context.Context,
 	funcs ...AsyncFn,
-) (out [][]any, errs []error, hasError bool) {
+) ([][]any, error) {
 	validateAsyncFuncs(funcs...)
 
-	hasError = false
-	errs = make([]error, len(funcs))
-	out = make([][]any, len(funcs))
+	out := make([][]any, len(funcs))
 	if len(funcs) == 0 {
-		return
+		return out, nil
 	}
 
 	parent = getContext(parent)
+
+	errs := make([]error, len(funcs))
+	errNum := atomic.Int32{}
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(funcs))
@@ -134,7 +136,7 @@ func allCompleted(
 
 			ret, err := invokeAsyncFn(fn, childCtx, nil)
 			if err != nil {
-				hasError = true
+				errNum.Add(1)
 				errs[n] = err
 			}
 			out[n] = ret
@@ -142,6 +144,11 @@ func allCompleted(
 	}
 
 	wg.Wait()
+	if errNum.Load() == 0 {
+		return out, nil
+	}
 
-	return
+	err := convertErrorListToExecutionErrors(errs, int(errNum.Load()))
+
+	return out, err
 }

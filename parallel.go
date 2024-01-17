@@ -3,6 +3,7 @@ package async
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 )
 
 // Parallel runs the functions asynchronously with the specified concurrency limitation. It will
@@ -122,7 +123,7 @@ func runTaskInParallel(
 //
 // The number of concurrency must be greater than or equal to 0, and it means no concurrency
 // limitation if the number is 0.
-func ParallelCompleted(concurrency int, funcs ...AsyncFn) ([][]any, []error, bool) {
+func ParallelCompleted(concurrency int, funcs ...AsyncFn) ([][]any, error) {
 	return parallelCompleted(context.Background(), concurrency, funcs...)
 }
 
@@ -138,7 +139,7 @@ func ParallelCompletedWithContext(
 	ctx context.Context,
 	concurrency int,
 	funcs ...AsyncFn,
-) ([][]any, []error, bool) {
+) ([][]any, error) {
 	return parallelCompleted(ctx, concurrency, funcs...)
 }
 
@@ -148,7 +149,7 @@ func parallelCompleted(
 	parent context.Context,
 	concurrency int,
 	funcs ...AsyncFn,
-) ([][]any, []error, bool) {
+) ([][]any, error) {
 	// the number of concurrency should be 0 (no limitation) or greater than 0.
 	if concurrency < 0 {
 		panic(ErrInvalidConcurrency)
@@ -156,14 +157,14 @@ func parallelCompleted(
 	validateAsyncFuncs(funcs...)
 
 	out := make([][]any, len(funcs))
-	errs := make([]error, len(funcs))
-	hasError := false
 
 	if len(funcs) == 0 {
-		return out, errs, hasError
+		return out, nil
 	}
 
 	ctx := getContext(parent)
+	errs := make([]error, len(funcs))
+	errNum := atomic.Int32{}
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(funcs))
@@ -189,7 +190,7 @@ func parallelCompleted(
 			ret, err := invokeAsyncFn(fn, childCtx, nil)
 			if err != nil {
 				errs[n] = err
-				hasError = true
+				errNum.Add(1)
 			}
 			out[n] = ret
 
@@ -200,6 +201,11 @@ func parallelCompleted(
 	}
 
 	wg.Wait()
+	if errNum.Load() == 0 {
+		return out, nil
+	}
 
-	return out, errs, hasError
+	err := convertErrorListToExecutionErrors(errs, int(errNum.Load()))
+
+	return out, err
 }

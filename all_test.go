@@ -112,9 +112,8 @@ func BenchmarkAll(b *testing.B) {
 func TestAllCompletedWithoutFuncs(t *testing.T) {
 	a := assert.New(t)
 
-	out, errs, hasError := AllCompleted()
-	a.NotTrueNow(hasError)
-	a.EqualNow(errs, []error{})
+	out, err := AllCompleted()
+	a.NilNow(err)
 	a.EqualNow(out, [][]any{})
 }
 
@@ -132,10 +131,9 @@ func TestAllCompletedSuccess(t *testing.T) {
 		})
 	}
 
-	out, errs, hasError := AllCompleted(funcs...)
-	a.NotTrueNow(hasError)
+	out, err := AllCompleted(funcs...)
+	a.NilNow(err)
 	a.EqualNow(data, []bool{true, true, true, true, true})
-	a.EqualNow(errs, []error{nil, nil, nil, nil, nil})
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
 }
 
@@ -158,10 +156,10 @@ func TestAllCompletedPartialFailure(t *testing.T) {
 		})
 	}
 
-	out, errs, hasError := AllCompleted(funcs...)
-	a.TrueNow(hasError)
+	out, err := AllCompleted(funcs...)
+	a.NotNilNow(err)
+	a.EqualNow(err.Error(), "function 2 error: n = 2")
 	a.EqualNow(data, []bool{true, true, false, true, true})
-	a.EqualNow(errs, []error{nil, nil, errNIs2, nil, nil})
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, errNIs2}, {3, nil}, {4, nil}})
 }
 
@@ -169,12 +167,11 @@ func TestAllCompletedWithNilContext(t *testing.T) {
 	a := assert.New(t)
 
 	//lint:ignore SA1012 for test case only
-	out, errs, hasError := AllCompletedWithContext(nil, func(ctx context.Context) error {
+	out, err := AllCompletedWithContext(nil, func(ctx context.Context) error {
 		time.Sleep(100 * time.Millisecond)
 		return nil
 	})
-	a.NotTrueNow(hasError)
-	a.EqualNow(errs, []error{nil})
+	a.NilNow(err)
 	a.EqualNow(out, [][]any{{nil}})
 }
 
@@ -202,10 +199,12 @@ func TestAllCompletedWithTimeoutContext(t *testing.T) {
 	ctx, canFunc := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer canFunc()
 
-	out, errs, hasError := AllCompletedWithContext(ctx, funcs...)
-	a.TrueNow(hasError)
+	out, err := AllCompletedWithContext(ctx, funcs...)
+	a.NotNilNow(err)
+	a.EqualNow(err.Error(), `function 2 error: timeout
+function 3 error: timeout
+function 4 error: timeout`)
 	a.EqualNow(data, []bool{true, true, false, false, false})
-	a.EqualNow(errs, []error{nil, nil, errTimeout, errTimeout, errTimeout})
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, errTimeout}, {3, errTimeout}, {4, errTimeout}})
 }
 

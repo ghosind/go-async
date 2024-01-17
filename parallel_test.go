@@ -154,9 +154,8 @@ func BenchmarkParallel(b *testing.B) {
 func TestParallelCompleted(t *testing.T) {
 	a := assert.New(t)
 
-	out, errs, hasError := ParallelCompleted(0)
-	a.NotTrueNow(hasError)
-	a.EqualNow(errs, []error{})
+	out, err := ParallelCompleted(0)
+	a.NilNow(err)
 	a.EqualNow(out, [][]any{})
 
 	a.PanicNow(func() {
@@ -177,10 +176,9 @@ func TestParallelCompletedWithoutConcurrencyLimit(t *testing.T) {
 	}
 
 	start := time.Now()
-	out, errs, hasError := ParallelCompleted(0, funcs...)
+	out, err := ParallelCompleted(0, funcs...)
 	dur := time.Since(start)
-	a.NotTrueNow(hasError)
-	a.EqualNow(errs, []error{nil, nil, nil, nil, nil})
+	a.NilNow(err)
 	a.TrueNow(dur-100*time.Millisecond < 30*time.Millisecond) // allow 30ms deviation
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
 }
@@ -198,10 +196,9 @@ func TestParallelCompletedWithConcurrencyLimit(t *testing.T) {
 	}
 
 	start := time.Now()
-	out, errs, hasError := ParallelCompleted(2, funcs...)
+	out, err := ParallelCompleted(2, funcs...)
 	dur := time.Since(start)
-	a.NotTrueNow(hasError)
-	a.EqualNow(errs, []error{nil, nil, nil, nil, nil})
+	a.NilNow(err)
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
 	a.TrueNow(dur-300*time.Millisecond < 30*time.Millisecond) // allow 30ms deviation
 }
@@ -225,9 +222,9 @@ func TestParallelCompletedWithFailedTask(t *testing.T) {
 		})
 	}
 
-	out, errs, hasError := ParallelCompleted(0, funcs...)
-	a.TrueNow(hasError)
-	a.EqualNow(errs, []error{nil, nil, expectedErr, nil, nil})
+	out, err := ParallelCompleted(0, funcs...)
+	a.NotNilNow(err)
+	a.EqualNow(err.Error(), "function 2 error: expected error")
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, expectedErr}, {3, nil}, {4, nil}})
 }
 
@@ -245,9 +242,8 @@ func TestParallelCompletedWithContext(t *testing.T) {
 		})
 	}
 
-	out, errs, hasError := ParallelCompletedWithContext(context.Background(), 2, funcs...)
-	a.NotTrueNow(hasError)
-	a.EqualNow(errs, []error{nil, nil, nil, nil, nil})
+	out, err := ParallelCompletedWithContext(context.Background(), 2, funcs...)
+	a.NilNow(err)
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
 
 	finishedNum := 0
@@ -284,9 +280,11 @@ func TestParallelCompletedWithTimedOutContext(t *testing.T) {
 	ctx, canFunc := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer canFunc()
 
-	out, errs, hasError := ParallelCompletedWithContext(ctx, 2, funcs...)
-	a.TrueNow(hasError)
-	a.EqualNow(errs, []error{nil, nil, timeoutErr, timeoutErr, timeoutErr})
+	out, err := ParallelCompletedWithContext(ctx, 2, funcs...)
+	a.NotNilNow(err)
+	a.EqualNow(err.Error(), `function 2 error: timed out
+function 3 error: timed out
+function 4 error: timed out`)
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, timeoutErr}, {3, timeoutErr}, {4, timeoutErr}})
 
 	finishedNum := 0
