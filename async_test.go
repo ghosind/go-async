@@ -31,12 +31,12 @@ func TestValidateAsyncFuncs(t *testing.T) {
 	a.NotPanicNow(func() {
 		validateAsyncFuncs(func() {})
 	})
-	a.PanicNow(func() {
+	a.PanicOfNow(func() {
 		validateAsyncFuncs(func() {}, nil, func() {})
-	})
-	a.PanicNow(func() {
+	}, ErrNotFunction)
+	a.PanicOfNow(func() {
 		validateAsyncFuncs(func() {}, 1, func() {})
-	})
+	}, ErrNotFunction)
 }
 
 func TestIsFuncTakesContext(t *testing.T) {

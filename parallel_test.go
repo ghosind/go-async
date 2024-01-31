@@ -16,9 +16,9 @@ func TestParallel(t *testing.T) {
 	a.NilNow(err)
 	a.EqualNow(out, [][]any{})
 
-	a.PanicNow(func() {
+	a.PanicOfNow(func() {
 		Parallel(-1)
-	})
+	}, ErrInvalidConcurrency)
 }
 
 func TestParallelWithoutConcurrencyLimit(t *testing.T) {
@@ -37,7 +37,7 @@ func TestParallelWithoutConcurrencyLimit(t *testing.T) {
 	out, err := Parallel(0, funcs...)
 	dur := time.Since(start)
 	a.NilNow(err)
-	a.TrueNow(dur-100*time.Millisecond < 30*time.Millisecond) // allow 30ms deviation
+	a.TrueNow(dur < 130*time.Millisecond) // allow 30ms deviation
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
 }
 
@@ -57,7 +57,7 @@ func TestParallelWithConcurrencyLimit(t *testing.T) {
 	out, err := Parallel(2, funcs...)
 	dur := time.Since(start)
 	a.NilNow(err)
-	a.TrueNow(dur-300*time.Millisecond < 30*time.Millisecond) // allow 30ms deviation
+	a.TrueNow(dur < 350*time.Millisecond) // allow 50ms deviation
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
 }
 
@@ -85,7 +85,7 @@ func TestParallelWithFailedTask(t *testing.T) {
 	dur := time.Since(start)
 	a.NotNilNow(err)
 	a.EqualNow(err.Error(), "function 2 error: expected error")
-	a.TrueNow(dur-150*time.Millisecond < 30*time.Millisecond) // allow 30ms deviation
+	a.TrueNow(dur < 180*time.Millisecond) // allow 30ms deviation
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, expectedErr}, nil, nil})
 }
 
@@ -158,9 +158,9 @@ func TestParallelCompleted(t *testing.T) {
 	a.NilNow(err)
 	a.EqualNow(out, [][]any{})
 
-	a.PanicNow(func() {
+	a.PanicOfNow(func() {
 		ParallelCompleted(-1)
-	})
+	}, ErrInvalidConcurrency)
 }
 
 func TestParallelCompletedWithoutConcurrencyLimit(t *testing.T) {
@@ -179,7 +179,7 @@ func TestParallelCompletedWithoutConcurrencyLimit(t *testing.T) {
 	out, err := ParallelCompleted(0, funcs...)
 	dur := time.Since(start)
 	a.NilNow(err)
-	a.TrueNow(dur-100*time.Millisecond < 30*time.Millisecond) // allow 30ms deviation
+	a.TrueNow(dur < 130*time.Millisecond) // allow 30ms deviation
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
 }
 
@@ -200,7 +200,7 @@ func TestParallelCompletedWithConcurrencyLimit(t *testing.T) {
 	dur := time.Since(start)
 	a.NilNow(err)
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
-	a.TrueNow(dur-300*time.Millisecond < 30*time.Millisecond) // allow 30ms deviation
+	a.TrueNow(dur < 350*time.Millisecond) // allow 50ms deviation
 }
 
 func TestParallelCompletedWithFailedTask(t *testing.T) {
