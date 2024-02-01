@@ -7,6 +7,8 @@
 ![License Badge](https://img.shields.io/github/license/ghosind/go-async)
 [![Go Reference](https://pkg.go.dev/badge/github.com/ghosind/go-async.svg)](https://pkg.go.dev/github.com/ghosind/go-async)
 
+English | [简体中文](./README-CN.md)
+
 A tool collection that provided asynchronous workflow control utilities, inspired by [JavaScript `Promise` Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) and [Node.js async package](https://caolan.github.io/async/v3/).
 
 ## Installation and Requirement
@@ -86,7 +88,7 @@ out, index, err := async.Race(func (ctx context.Context) (int, error) {
 
 ### Run all functions with concurrency limit
 
-To run all functions asynchronously but with the specified concurrency limitation, you can use the `Parallel` function. The `Parallel` function accepts a number that the concurrency limitation and the list of functions to run. The number of the concurrency limitation must be greater than or equal to 0, and it has the same effect as the `All` function if the number is 0.
+To run all functions asynchronously but with the specified concurrency limitation, you can use the `Parallel` function. The `Parallel` function accepts a number that the concurrency limitation and the list of functions to run. The number of the concurrency limitation must be greater than or equal to 0. The number 0 means no limitation of the concurrency number, and it has the same effect as the `All` function.
 
 ```go
 // Run 2 functions asynchronously at the time.
@@ -104,7 +106,7 @@ out, err := async.Parallel(2, func (ctx context.Context) (int, error) {
 // err: nil
 ```
 
-The `Parallel` will also be terminated if any function panics or returns an error. If you do not want to terminate the execution of other functions, you can try to use `ParallelCompleted`. The `ParallelCompleted` function will run all functions until all functions are finished. It will return the errors list and a boolean value to indicate whether any function errored.
+The `Parallel` will also be terminated if any function panics or returns an error. If you do not want to terminate the execution of other functions, you can try to use `ParallelCompleted`. The `ParallelCompleted` function will run all functions until all functions are finished. It will return the output list and an error to indicate whether any function errored.
 
 ### Run a function forever until it returns an error or panic
 
