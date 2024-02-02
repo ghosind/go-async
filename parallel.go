@@ -12,6 +12,20 @@ import (
 //
 // The number of concurrency must be greater than or equal to 0, and it means no concurrency
 // limitation if the number is 0.
+//
+//	// Run 2 functions asynchronously at the time.
+//	out, err := Parallel(2, func(ctx context.Context) (int, error) {
+//	  // Do something
+//	  return 1, nil
+//	}, func(ctx context.Context) (string, error) {
+//	  // Do something
+//	  return "hello", nil
+//	}, func(ctx context.Context) error {
+//	// Do something
+//	  return nil
+//	} /* , ... */)
+//	// out: [][]any{{1, <nil>}, {"hello", <nil>}, {<nil>}}
+//	// err: <nil>
 func Parallel(concurrency int, funcs ...AsyncFn) ([][]any, error) {
 	return parallel(context.Background(), concurrency, funcs...)
 }

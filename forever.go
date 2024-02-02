@@ -12,6 +12,28 @@ type ForeverFn func(ctx context.Context, next func(context.Context)) error
 //
 // You can use the context and call the next function to pass values to the next invocation. The
 // next function can be invoked one time only, and it will have no effect if it is invoked again.
+//
+//	err := Forever(func(ctx context.Context, next func(context.Context)) error {
+//	  v := ctx.Value("key")
+//	  if v != nil {
+//	    vi := v.(int)
+//	    if vi == 3 {
+//	      return errors.New("finish")
+//	    }
+//
+//	    fmt.Printf("value: %d\n", vi)
+//
+//	    next(context.WithValue(ctx, "key", vi+1))
+//	  } else {
+//	    next(context.WithValue(ctx, "key", 1))
+//	  }
+//
+//	  return nil
+//	})
+//	fmt.Printf("err: %v\n", err)
+//	// value: 1
+//	// value: 2
+//	// err: finish
 func Forever(fn ForeverFn) error {
 	return forever(context.Background(), fn)
 }

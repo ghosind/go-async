@@ -12,6 +12,26 @@ import (
 //
 // The index of the function will be -1 if all functions have been completed without error or
 // panic.
+//
+//	out, err := async.All(func() (int, error) {
+//	  return 1, nil
+//	}, func() (string, error) {
+//	  time.Sleep(100 * time.Millisecond)
+//	  return "hello", nil
+//	}, func(ctx context.Context) error {
+//	  time.Sleep(50 * time.Millisecond)
+//	  return nil
+//	})
+//	// out: [][]any{{1, nil}, {"hello", nil}, {nil}}
+//	// err: nil
+//
+//	_, err = async.All(func() (int, error) {
+//	  return 0, errors.New("some error")
+//	}, func() (string, error) {
+//	  time.Sleep(100 * time.Millisecond)
+//	  return "hello", nil
+//	})
+//	// err: function 0 error: some error
 func All(funcs ...AsyncFn) ([][]any, error) {
 	return all(context.Background(), funcs...)
 }
@@ -90,6 +110,18 @@ func runTaskInAll(ctx context.Context, n int, fn AsyncFn, ch chan<- executeResul
 // AllCompleted executes the functions asynchronously until all functions have been finished. It
 // will return an error slice that is ordered by the functions order, and a boolean value to
 // indicate whether any functions return an error or panic.
+//
+//	out, err := async.AllCompleted(func() (int, error) {
+//	  return 1, nil
+//	}, func() (string, error) {
+//	  time.Sleep(100 * time.Millisecond)
+//	  return "hello", nil
+//	}, func(ctx context.Context) error {
+//	  time.Sleep(50 * time.Millisecond)
+//	  return errors.New("some error")
+//	})
+//	// out: [][]any{{1, nil}, {"hello", nil}, {some error}}
+//	// err: function 2 error: some error
 func AllCompleted(funcs ...AsyncFn) ([][]any, error) {
 	return allCompleted(context.Background(), funcs...)
 }

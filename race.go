@@ -8,6 +8,19 @@ import (
 // Race executes the functions asynchronously, it will return the index and the result of the first
 // of the finished function (including panic), and it will not send a cancel signal to other
 // functions.
+//
+//	out, index, err := Race(func(ctx context.Context) (int, error) {
+//	  request.Get("https://example.com")
+//	  return 0, nil
+//	}, func(ctx context.Context) (string, error) {
+//	  time.Sleep(500 * time.Millisecond)
+//	  return "test", nil
+//	})
+//	// If the first function faster than the second one:
+//	// out: []any{0, <nil>}, index: 0, err: <nil>
+//	//
+//	// Otherwise:
+//	// out: []any{"test", <nil>}, index: 1, err: <nil>
 func Race(funcs ...AsyncFn) ([]any, int, error) {
 	return race(context.Background(), funcs...)
 }
