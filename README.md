@@ -32,32 +32,32 @@ The most of utility functions of this library accept any type of function to run
 If any function returns an error or panics, the `All` function will terminate immediately and return the error. It'll also send a cancel signal to other uncompleted functions by context if they accept a context by their first parameter.
 
 ```go
-out, err := async.All(func (ctx context.Context) (int, error)) {
+out, err := async.All(func (ctx context.Context) (int, error) {
   return 0, nil
 }, func (ctx context.Context) (string, error)) {
   return "hello", nil
 }/*, ...*/)
-// out: [][]any{{0, nil}, {"hello", nil}}
+// out: [][]any{{0, <nil>}, {"hello", <nil>}}
 // err: <nil>
 
-out, err := async.All(func (ctx context.Context) (int, error)) {
+out, err := async.All(func (ctx context.Context) (int, error) {
   return 0, nil
 }, func (ctx context.Context) (string, error)) {
   return "", errors.New("some error")
 }/*, ...*/)
-// out: nil
-// err: some error
+// out: [][]any{{}, {"", some error}}
+// err: function 1 error: some error
 ```
 
 If you do not want to terminate the execution when some function returns an error or panic, you can try the `AllCompleted` function. The `AllCompleted` function executes until all functions are finished or panic. It'll return a list of the function return values, and an error to indicate whether any functions return error or panic.
 
 ```go
-out, err := async.All(func (ctx context.Context) (int, error) {
+out, err := async.AllCompleted(func (ctx context.Context) (int, error) {
   return 0, nil
 }, func (ctx context.Context) (string, error) {
   return "", errors.New("some error")
 }/*, ...*/)
-// out: [][]any{{0, nil}, {"", some error}}}
+// out: [][]any{{0, <nil>}, {"", some error}}}
 // err: function 1 error: some error
 ```
 
@@ -80,10 +80,10 @@ out, index, err := async.Race(func (ctx context.Context) (int, error) {
   return "test", nil
 })
 // If the first function faster than the second one:
-// out: []any{0, nil}, index: 0, err: nil
+// out: []any{0, <nil>}, index: 0, err: <nil>
 //
 // Otherwise:
-// out: []any{"test", nil}, index: 1, err: nil
+// out: []any{"test", <nil>}, index: 1, err: <nil>
 ```
 
 ### Run all functions with concurrency limit
@@ -102,8 +102,8 @@ out, err := async.Parallel(2, func (ctx context.Context) (int, error) {
   // Do something
   return nil
 }/* , ... */)
-// out: [][]any{{1, nil}, {"hello", nil}, {nil}}
-// err: nil
+// out: [][]any{{1, <nil>}, {"hello", <nil>}, {<nil>}}
+// err: <nil>
 ```
 
 The `Parallel` will also be terminated if any function panics or returns an error. If you do not want to terminate the execution of other functions, you can try to use `ParallelCompleted`. The `ParallelCompleted` function will run all functions until all functions are finished. It will return the output list and an error to indicate whether any function errored.
@@ -113,9 +113,9 @@ The `Parallel` will also be terminated if any function panics or returns an erro
 For `Forever` function, you can use it to run a function forever until it returns an error or panics. You need to run the `Forever` function with a `ForeverFn` type function, and you can see more information about `ForeverFn` after the following example.
 
 ```go
-err := async.Forever(func(ctx context.Context, next func(context.Context)) error {
-  v, ok := ctx.Value("key")
-  if ok {
+err := Forever(func(ctx context.Context, next func(context.Context)) error {
+  v := ctx.Value("key")
+  if v != nil {
     vi := v.(int)
     if vi == 5 {
       return errors.New("finish")
@@ -123,10 +123,12 @@ err := async.Forever(func(ctx context.Context, next func(context.Context)) error
 
     fmt.Printf("value: %d\n", vi)
 
-    next(context.WithValue(ctx, "key", vi + 1))
+    next(context.WithValue(ctx, "key", vi+1))
   } else {
     next(context.WithValue(ctx, "key", 1))
   }
+
+  return nil
 })
 fmt.Printf("err: %v\n", err)
 // value: 1

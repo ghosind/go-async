@@ -32,27 +32,27 @@ go get -u github.com/ghosind/go-async
 在`All`方法执行时，一旦有任意一个函数发生错误，它将立即结束并返回该错误，并且通过传递的上下文发生取消信号。
 
 ```go
-out, err := async.All(func (ctx context.Context) (int, error)) {
+out, err := async.All(func (ctx context.Context) (int, error) {
   return 0, nil
 }, func (ctx context.Context) (string, error)) {
   return "hello", nil
 }/*, ...*/)
-// out: [][]any{{0, nil}, {"hello", nil}}
+// out: [][]any{{0, <nil>}, {"hello", <nil>}}
 // err: <nil>
 
-out, err := async.All(func (ctx context.Context) (int, error)) {
+out, err := async.All(func (ctx context.Context) (int, error) {
   return 0, nil
 }, func (ctx context.Context) (string, error)) {
   return "", errors.New("some error")
 }/*, ...*/)
-// out: nil
-// err: some error
+// out: [][]any{{}, {"", some error}}
+// err: function 1 error: some error
 ```
 
 若在执行过程中，即使有某个函数发生错误也不希望结束整体的运行，可以使用`AllCompleted`方法。`AllCompleted`方法会等待所有函数都执行完成或发生错误后，才会结束并返回所有函数的执行结果。
 
 ```go
-out, err := async.All(func (ctx context.Context) (int, error) {
+out, err := async.AllCompleted(func (ctx context.Context) (int, error) {
   return 0, nil
 }, func (ctx context.Context) (string, error) {
   return "", errors.New("some error")
@@ -80,10 +80,10 @@ out, index, err := async.Race(func (ctx context.Context) (int, error) {
   return "test", nil
 })
 // 第一个函数比第二个函数快的情况下：
-// out: []any{0, nil}, index: 0, err: nil
+// out: []any{0, <nil>}, index: 0, err: <nil>
 //
 // 第二个函数比第二个函数快的情况下：
-// out: []any{"test", nil}, index: 1, err: nil
+// out: []any{"test", <nil>}, index: 1, err: <nil>
 ```
 
 ### 在并发限制下运行
@@ -102,8 +102,8 @@ out, err := async.Parallel(2, func (ctx context.Context) (int, error) {
   // Do something
   return nil
 }/* , ... */)
-// out: [][]any{{1, nil}, {"hello", nil}, {nil}}
-// err: nil
+// out: [][]any{{1, <nil>}, {"hello", <nil>}, {<nil>}}
+// err: <nil>
 ```
 
 在某一个函数发生错误时，`Parallel`也会结束并发送取消信号至其它函数。若不希望结束其它函数的执行，可以使用`ParallelCompleted`代替，它将执行全部函数直到所有函数都完成或发生错误。
@@ -113,9 +113,9 @@ out, err := async.Parallel(2, func (ctx context.Context) (int, error) {
 通过`Forever`方法，可以持续运行某一函数直到该函数发生错误。`Forever`方法需要接受一个`ForeverFn`类型的方法用于执行，对于该类型的具体信息可以参考示例下方的描述。
 
 ```go
-err := async.Forever(func(ctx context.Context, next func(context.Context)) error {
-  v, ok := ctx.Value("key")
-  if ok {
+err := Forever(func(ctx context.Context, next func(context.Context)) error {
+  v := ctx.Value("key")
+  if v != nil {
     vi := v.(int)
     if vi == 5 {
       return errors.New("finish")
@@ -123,12 +123,13 @@ err := async.Forever(func(ctx context.Context, next func(context.Context)) error
 
     fmt.Printf("value: %d\n", vi)
 
-    next(context.WithValue(ctx, "key", vi + 1))
+    next(context.WithValue(ctx, "key", vi+1))
   } else {
     next(context.WithValue(ctx, "key", 1))
   }
+
+  return nil
 })
-fmt.Printf("err: %v\n", err)
 // value: 1
 // value: 2
 // value: 3
