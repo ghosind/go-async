@@ -18,6 +18,10 @@ type RetryOptions struct {
 	// IntervalFunc is the function to calculate the time to wait between retries in milliseconds, it
 	// accepts an int value to indicate the retry count.
 	IntervalFunc func(int) int
+	// ErrorFilter is a function that is invoked on an error result. Retry will continue the retry
+	// attempts if it returns true, and it will abort the workflow and return the current attempt's
+	// result and error if it returns false.
+	ErrorFilter func(error) bool
 }
 
 // Retry attempts to get a successful response from the function with no more than the specific
@@ -47,7 +51,10 @@ func retry(parent context.Context, fn AsyncFn, opts ...RetryOptions) (out []any,
 		out, err = invokeAsyncFn(fn, ctx, nil)
 		if err == nil {
 			return
+		} else if opt.ErrorFilter != nil && !opt.ErrorFilter(err) {
+			return
 		}
+
 		if i != opt.Times {
 			interval := opt.Interval
 			if opt.IntervalFunc != nil {
@@ -70,6 +77,7 @@ func getRetryOption(opts ...RetryOptions) RetryOptions {
 		opt.Interval = opts[0].Interval
 		opt.Times = opts[0].Times
 		opt.IntervalFunc = opts[0].IntervalFunc
+		opt.ErrorFilter = opts[0].ErrorFilter
 	}
 
 	if opt.Interval <= 0 {
