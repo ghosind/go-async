@@ -97,6 +97,27 @@ func TestRetryWithIntervalFunc(t *testing.T) {
 		time.Since(start) <= 550*time.Millisecond) // allow 50ms deviation
 }
 
+func TestRetryWithErrorFilter(t *testing.T) {
+	a := assert.New(t)
+	expected := errors.New("expected error")
+	i := 0
+
+	out, err := Retry(func() error {
+		i++
+		if i == 3 {
+			return expected
+		} else {
+			return errors.New("not 3")
+		}
+	}, RetryOptions{
+		ErrorFilter: func(err error) bool {
+			return !errors.Is(err, expected)
+		},
+	})
+	a.EqualNow(err, expected)
+	a.EqualNow(out, []any{expected})
+}
+
 func TestRetryWithContext(t *testing.T) {
 	a := assert.New(t)
 
