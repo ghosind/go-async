@@ -66,18 +66,35 @@ func TestRetryWithTimes(t *testing.T) {
 func TestRetryWithInterval(t *testing.T) {
 	a := assert.New(t)
 	expected := errors.New("expected error")
-	i := 0
 
 	start := time.Now()
 	out, err := Retry(func() (int, error) {
-		i++
 		return 0, expected
 	}, RetryOptions{
 		Interval: 100,
 	})
 	a.EqualNow(err, expected)
 	a.EqualNow(out, []any{0, expected})
-	a.TrueNow(time.Since(start) < 410*time.Millisecond)
+	a.TrueNow(time.Since(start) >= 400*time.Millisecond &&
+		time.Since(start) <= 450*time.Millisecond) // allow 50ms deviation
+}
+
+func TestRetryWithIntervalFunc(t *testing.T) {
+	a := assert.New(t)
+	expected := errors.New("expected error")
+
+	start := time.Now()
+	out, err := Retry(func() (int, error) {
+		return 0, expected
+	}, RetryOptions{
+		IntervalFunc: func(n int) int {
+			return n * 50
+		},
+	})
+	a.EqualNow(err, expected)
+	a.EqualNow(out, []any{0, expected})
+	a.TrueNow(time.Since(start) >= 500*time.Millisecond &&
+		time.Since(start) <= 550*time.Millisecond) // allow 50ms deviation
 }
 
 func TestRetryWithContext(t *testing.T) {
