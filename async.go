@@ -162,7 +162,8 @@ func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Va
 				// check the parameter's type is whether nil-able or not when the value is nil
 				kind := it.Kind()
 				switch kind {
-				case reflect.Chan, reflect.Map, reflect.Pointer, reflect.UnsafePointer, reflect.Interface, reflect.Slice:
+				case reflect.Chan, reflect.Map, reflect.Pointer, reflect.UnsafePointer,
+					reflect.Interface, reflect.Slice:
 					vv = reflect.Zero(it)
 				default:
 					panic(ErrUnmatchedParam)
