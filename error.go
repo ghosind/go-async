@@ -15,7 +15,8 @@ var (
 	ErrInvalidConcurrency error = errors.New("invalid concurrency")
 	// ErrNotFunction indicates the value is not a function.
 	ErrNotFunction error = errors.New("not function")
-
+	// ErrUnmatchedParam indicates the function's parameter list does not match to the list from the
+	// caller.
 	ErrUnmatchedParam error = errors.New("parameters are unmatched")
 )
 
