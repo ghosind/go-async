@@ -150,14 +150,21 @@ func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Va
 	}
 
 	for _, v := range params {
+		vt := reflect.TypeOf(v) // the type of the value
 		vv := reflect.ValueOf(v)
-		vt := vv.Type() // the type of the value
-		it := ft.In(i)  // the type in the parameter list
+		it := ft.In(i) // the type in the parameter list
 
 		if vt != it {
 			// if the value's type does not match the parameter list, try to convert it first
-			if vt.ConvertibleTo(it) {
+			if vt != nil && vt.ConvertibleTo(it) {
 				vv = vv.Convert(it)
+			} else if v == nil {
+				zero := reflect.Zero(it)
+				if zero.IsNil() {
+					vv = zero
+				} else {
+					panic(ErrUnmatchedParam)
+				}
 			} else {
 				panic(ErrUnmatchedParam)
 			}

@@ -106,6 +106,8 @@ func TestInvokeAsyncFnWithParams(t *testing.T) {
 
 	a.NotPanicNow(func() { invokeAsyncFn(func(ctx context.Context) {}, ctx, nil) })
 	a.NotPanicNow(func() { invokeAsyncFn(func(n int) {}, ctx, []any{float64(1.0)}) })
+	a.NotPanicNow(func() { invokeAsyncFn(func(err error) {}, ctx, []any{nil}) })
+	a.NotPanicNow(func() { invokeAsyncFn(func(s *struct{ V int }) {}, ctx, []any{nil}) })
 	a.NotPanicNow(func() {
 		invokeAsyncFn(func(ctx context.Context, n int) {}, ctx, []any{float64(1.0)})
 	})
