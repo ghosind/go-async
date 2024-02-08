@@ -116,6 +116,9 @@ func TestInvokeAsyncFnWithParams(t *testing.T) {
 		invokeAsyncFn(func(n int) {}, ctx, nil)
 	}, ErrUnmatchedParam)
 	a.PanicOfNow(func() {
+		invokeAsyncFn(func(n int) {}, ctx, []any{nil})
+	}, ErrUnmatchedParam)
+	a.PanicOfNow(func() {
 		invokeAsyncFn(func(n int) {}, ctx, []any{"hello"})
 	}, ErrUnmatchedParam)
 	a.PanicOfNow(func() {
