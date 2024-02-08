@@ -15,6 +15,8 @@ var (
 	ErrInvalidConcurrency error = errors.New("invalid concurrency")
 	// ErrNotFunction indicates the value is not a function.
 	ErrNotFunction error = errors.New("not function")
+
+	ErrUnmatchedParam error = errors.New("parameters are unmatched")
 )
 
 type ExecutionError interface {

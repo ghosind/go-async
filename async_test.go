@@ -99,3 +99,39 @@ func TestInvokeAsyncFn(t *testing.T) {
 	a.NilNow(err)
 	a.EqualNow(ret, []any{1, "test", nil})
 }
+
+func TestInvokeAsyncFnWithParams(t *testing.T) {
+	a := assert.New(t)
+	ctx := context.Background()
+
+	a.NotPanicNow(func() { invokeAsyncFn(func(ctx context.Context) {}, ctx, nil) })
+	a.NotPanicNow(func() { invokeAsyncFn(func(n int) {}, ctx, []any{float64(1.0)}) })
+	a.NotPanicNow(func() {
+		invokeAsyncFn(func(ctx context.Context, n int) {}, ctx, []any{float64(1.0)})
+	})
+
+	a.PanicOfNow(func() {
+		invokeAsyncFn(func(n int) {}, ctx, nil)
+	}, ErrUnmatchedParam)
+	a.PanicOfNow(func() {
+		invokeAsyncFn(func(n int) {}, ctx, []any{"hello"})
+	}, ErrUnmatchedParam)
+	a.PanicOfNow(func() {
+		invokeAsyncFn(func(n int) {}, ctx, []any{float64(1.0), "hello"})
+	}, ErrUnmatchedParam)
+	a.PanicOfNow(func() {
+		invokeAsyncFn(func(n int) {}, ctx, []any{float64(1.0), 1})
+	}, ErrUnmatchedParam)
+	a.PanicOfNow(func() {
+		invokeAsyncFn(func(ctx context.Context, n int) {}, ctx, nil)
+	}, ErrUnmatchedParam)
+	a.PanicOfNow(func() {
+		invokeAsyncFn(func(ctx context.Context, n int) {}, ctx, []any{"hello"})
+	}, ErrUnmatchedParam)
+	a.PanicOfNow(func() {
+		invokeAsyncFn(func(ctx context.Context, n int) {}, ctx, []any{float64(1.0), "hello"})
+	}, ErrUnmatchedParam)
+	a.PanicOfNow(func() {
+		invokeAsyncFn(func(ctx context.Context, n int) {}, ctx, []any{float64(1.0), 1})
+	}, ErrUnmatchedParam)
+}

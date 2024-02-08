@@ -95,15 +95,9 @@ func isFuncReturnsError(fn reflect.Type) bool {
 func invokeAsyncFn(fn AsyncFn, ctx context.Context, params []any) ([]any, error) {
 	fv := reflect.ValueOf(fn)
 	ft := fv.Type()
-	in := make([]reflect.Value, 0, len(params)+1)
 	var out []reflect.Value
 
-	if isFuncTakesContext(ft) {
-		in = append(in, reflect.ValueOf(ctx))
-	}
-	for _, v := range params {
-		in = append(in, reflect.ValueOf(v))
-	}
+	in := makeFuncIn(ft, ctx, params)
 
 	numRet := ft.NumOut()
 	ret := make([]any, 0, numRet)
@@ -128,4 +122,50 @@ func invokeAsyncFn(fn AsyncFn, ctx context.Context, params []any) ([]any, error)
 	}
 
 	return ret, err
+}
+
+// makeFuncIn checks the parameters of the function and the params slice from the caller, and
+// returns a reflect.Value slice of the input parameters. It'll prepend the context to the
+// parameter list if the function's first parameter is a context.
+//
+// The function will panic an unmatched param error if the number of parameters is not equal to the
+// param list, or some elements' types of parameters are not match.
+func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Value {
+	numIn := ft.NumIn()
+	isTakeContext := isFuncTakesContext(ft)
+	if isTakeContext {
+		numIn--
+	}
+	if numIn != len(params) {
+		panic(ErrUnmatchedParam)
+	}
+
+	in := make([]reflect.Value, ft.NumIn())
+	i := 0 // index of the input parameter list
+
+	if isTakeContext {
+		// prepend context to the input parameter list
+		in[i] = reflect.ValueOf(ctx)
+		i++
+	}
+
+	for _, v := range params {
+		vv := reflect.ValueOf(v)
+		vt := vv.Type() // the type of the value
+		it := ft.In(i)  // the type in the parameter list
+
+		if vt != it {
+			// if the value's type does not match the parameter list, try to convert it first
+			if vt.ConvertibleTo(it) {
+				vv = vv.Convert(it)
+			} else {
+				panic(ErrUnmatchedParam)
+			}
+		}
+
+		in[i] = vv
+		i++
+	}
+
+	return in
 }
