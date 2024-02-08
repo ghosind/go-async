@@ -18,6 +18,8 @@ var (
 	// ErrUnmatchedParam indicates the function's parameter list does not match to the list from the
 	// caller.
 	ErrUnmatchedParam error = errors.New("parameters are unmatched")
+	// ErrInvalidTestFunc indicates the test function is invalid.
+	ErrInvalidTestFunc error = errors.New("invalid test function")
 )
 
 type ExecutionError interface {
