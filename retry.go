@@ -28,6 +28,19 @@ type RetryOptions struct {
 // retry times before returning an error. If the task is successful, it will return the result of
 // the successful task. If all attempts fail, it will return the result and the error of the final
 // attempt.
+//
+//	Retry(func() error {
+//	  // Do something
+//	  return err
+//	}) // Run the function 5 times without interval time or it succeed
+//
+//	Retry(func() error {
+//	  // Do something
+//	  return err
+//	}, RetryOptions{
+//	  Times: 3,
+//	  Interval: 100,
+//	}) // Run the function 3 times with 100ms interval or it succeed
 func Retry(fn AsyncFn, opts ...RetryOptions) ([]any, error) {
 	return retry(context.Background(), fn, opts...)
 }
