@@ -47,6 +47,9 @@ func TestUntilInvalidParameters(t *testing.T) {
 	a.NotPanicNow(func() {
 		Until(func(ctx context.Context, err error) bool { return true }, func() error { return nil })
 	})
+	a.NotPanicNow(func() {
+		Until(func(ctx context.Context) bool { return true }, func() error { return nil })
+	})
 	a.PanicOfNow(func() {
 		Until(func(ctx context.Context, i int) bool { return true }, func() error { return nil })
 	}, ErrInvalidTestFunc)

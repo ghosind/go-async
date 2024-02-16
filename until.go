@@ -32,14 +32,18 @@ func UntilWithContext(ctx context.Context, testFn, fn AsyncFn) ([]any, error) {
 
 // until repeatedly calls the function until the test function returns true.
 func until(parent context.Context, testFn, fn AsyncFn) ([]any, error) {
-	validateUntilFuncs(testFn, fn)
+	isNoParam := validateUntilFuncs(testFn, fn)
 
 	ctx := getContext(parent)
 
 	for {
 		out, _ := invokeAsyncFn(fn, ctx, nil)
 
-		testOut, testErr := invokeAsyncFn(testFn, ctx, out)
+		params := out
+		if isNoParam {
+			params = nil
+		}
+		testOut, testErr := invokeAsyncFn(testFn, ctx, params)
 		if testErr != nil {
 			return out, testErr
 		}
@@ -52,7 +56,7 @@ func until(parent context.Context, testFn, fn AsyncFn) ([]any, error) {
 }
 
 // validateUntilFuncs validates the test function and the execution function.
-func validateUntilFuncs(testFn, fn AsyncFn) {
+func validateUntilFuncs(testFn, fn AsyncFn) (isNoParam bool) {
 	if testFn == nil || fn == nil {
 		panic(ErrNotFunction)
 	}
@@ -74,8 +78,11 @@ func validateUntilFuncs(testFn, fn AsyncFn) {
 		numIn--
 		ii++
 	}
-	if numIn != ft.NumOut() {
+	if numIn != 0 && numIn != ft.NumOut() {
 		panic(ErrInvalidTestFunc)
+	}
+	if numIn == 0 {
+		return true
 	}
 
 	for oi < numIn {
@@ -89,4 +96,6 @@ func validateUntilFuncs(testFn, fn AsyncFn) {
 		ii++
 		oi++
 	}
+
+	return false
 }
