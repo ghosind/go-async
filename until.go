@@ -37,12 +37,16 @@ func until(parent context.Context, testFn, fn AsyncFn) ([]any, error) {
 	ctx := getContext(parent)
 
 	for {
-		out, err := invokeAsyncFn(fn, ctx, nil)
+		out, _ := invokeAsyncFn(fn, ctx, nil)
 
-		testOut, _ := invokeAsyncFn(testFn, ctx, out)
+		testOut, testErr := invokeAsyncFn(testFn, ctx, out)
+		if testErr != nil {
+			return out, testErr
+		}
+
 		isDone := testOut[0].(bool)
 		if isDone {
-			return out, err
+			return out, nil
 		}
 	}
 }

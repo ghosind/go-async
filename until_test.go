@@ -2,6 +2,7 @@ package async
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -52,6 +53,35 @@ func TestUntilInvalidParameters(t *testing.T) {
 	a.PanicOfNow(func() {
 		Until(func(ctx context.Context, i int) bool { return true }, func() {})
 	}, ErrInvalidTestFunc)
+}
+
+func TestUntilWithFunctionError(t *testing.T) {
+	a := assert.New(t)
+	count := 0
+	unexpectedErr := errors.New("unexpected error")
+
+	out, err := Until(func(c int, err error) bool {
+		return c == 5
+	}, func() (int, error) {
+		count++
+		return count, unexpectedErr
+	})
+	a.NilNow(err)
+	a.EqualNow(out, []any{5, unexpectedErr})
+}
+
+func TestUntilWithTestFunctionError(t *testing.T) {
+	a := assert.New(t)
+	expectedErr := errors.New("expected error")
+
+	out, err := Until(func(n int) bool {
+		panic(expectedErr)
+	}, func() int {
+		return 0
+	})
+	a.NotNilNow(err)
+	a.EqualNow(err, expectedErr)
+	a.EqualNow(out, []any{0})
 }
 
 func TestUntilWithContext(t *testing.T) {
