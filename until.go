@@ -48,8 +48,8 @@ func until(parent context.Context, testFn, fn AsyncFn) ([]any, error) {
 			return out, testErr
 		}
 
-		isDone := testOut[0].(bool)
-		if isDone {
+		isContinue := testOut[0].(bool)
+		if !isContinue {
 			return out, nil
 		}
 	}

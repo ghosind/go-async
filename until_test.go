@@ -14,7 +14,7 @@ func TestUntil(t *testing.T) {
 	count := 0
 
 	out, err := Until(func(c int) bool {
-		return c == 5
+		return c < 5
 	}, func() int {
 		count++
 		return count
@@ -39,22 +39,22 @@ func TestUntilInvalidParameters(t *testing.T) {
 		Until(func() {}, func() {})
 	}, ErrInvalidTestFunc)
 	a.NotPanicNow(func() {
-		Until(func() bool { return true }, func() {})
+		Until(func() bool { return false }, func() {})
 	})
 	a.NotPanicNow(func() {
-		Until(func(err error) bool { return true }, func() error { return nil })
+		Until(func(err error) bool { return false }, func() error { return nil })
 	})
 	a.NotPanicNow(func() {
-		Until(func(ctx context.Context, err error) bool { return true }, func() error { return nil })
+		Until(func(ctx context.Context, err error) bool { return false }, func() error { return nil })
 	})
 	a.NotPanicNow(func() {
-		Until(func(ctx context.Context) bool { return true }, func() error { return nil })
+		Until(func(ctx context.Context) bool { return false }, func() error { return nil })
 	})
 	a.PanicOfNow(func() {
-		Until(func(ctx context.Context, i int) bool { return true }, func() error { return nil })
+		Until(func(ctx context.Context, i int) bool { return false }, func() error { return nil })
 	}, ErrInvalidTestFunc)
 	a.PanicOfNow(func() {
-		Until(func(ctx context.Context, i int) bool { return true }, func() {})
+		Until(func(ctx context.Context, i int) bool { return false }, func() {})
 	}, ErrInvalidTestFunc)
 }
 
@@ -64,7 +64,7 @@ func TestUntilWithFunctionError(t *testing.T) {
 	unexpectedErr := errors.New("unexpected error")
 
 	out, err := Until(func(c int, err error) bool {
-		return c == 5
+		return c < 5
 	}, func() (int, error) {
 		count++
 		return count, unexpectedErr
@@ -96,9 +96,9 @@ func TestUntilWithContext(t *testing.T) {
 	out, err := UntilWithContext(ctx, func(ctx context.Context) bool {
 		select {
 		case <-ctx.Done():
-			return true
-		default:
 			return false
+		default:
+			return true
 		}
 	}, func() {
 	})

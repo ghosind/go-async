@@ -14,7 +14,7 @@ func TestWhile(t *testing.T) {
 	count := 0
 
 	out, err := While(func() bool {
-		return count == 5
+		return count < 5
 	}, func() int {
 		count++
 		return count
@@ -39,13 +39,13 @@ func TestWhileInvalidParameters(t *testing.T) {
 		While(func() {}, func() {})
 	}, ErrInvalidTestFunc)
 	a.NotPanicNow(func() {
-		While(func() bool { return true }, func() {})
+		While(func() bool { return false }, func() {})
 	})
 	a.NotPanicNow(func() {
-		While(func(ctx context.Context) bool { return true }, func() {})
+		While(func(ctx context.Context) bool { return false }, func() {})
 	})
 	a.PanicOfNow(func() {
-		While(func(ctx context.Context, i int) bool { return true }, func() {})
+		While(func(ctx context.Context, i int) bool { return false }, func() {})
 	}, ErrInvalidTestFunc)
 }
 
@@ -68,7 +68,7 @@ func TestWhileWithFunctionError(t *testing.T) {
 	expectedErr := errors.New("expected error")
 
 	out, err := While(func() bool {
-		return false
+		return true
 	}, func() (int, error) {
 		return 0, expectedErr
 	})
@@ -86,9 +86,9 @@ func TestWhileWithContext(t *testing.T) {
 	out, err := WhileWithContext(ctx, func(ctx context.Context) bool {
 		select {
 		case <-ctx.Done():
-			return true
-		default:
 			return false
+		default:
+			return true
 		}
 	}, func() {
 	})
