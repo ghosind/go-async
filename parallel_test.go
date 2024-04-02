@@ -3,6 +3,7 @@ package async
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -152,6 +153,27 @@ func BenchmarkParallel(b *testing.B) {
 	}
 
 	Parallel(5, tasks...)
+}
+
+func ExampleParallel() {
+	start := time.Now()
+	out, err := Parallel(2, func() int {
+		time.Sleep(50 * time.Millisecond)
+		return 1
+	}, func() int {
+		time.Sleep(50 * time.Millisecond)
+		return 2
+	}, func() int {
+		time.Sleep(50 * time.Millisecond)
+		return 3
+	})
+	fmt.Println(time.Since(start))
+	fmt.Println(out)
+	fmt.Println(err)
+	// Outputs:
+	// 101.210974ms
+	// [[1] [2] [3]]
+	// <nil>
 }
 
 func TestParallelCompleted(t *testing.T) {
@@ -310,4 +332,25 @@ func BenchmarkParallelCompleted(b *testing.B) {
 	}
 
 	ParallelCompleted(5, tasks...)
+}
+
+func ExampleParallelCompleted() {
+	start := time.Now()
+	out, err := ParallelCompleted(2, func() int {
+		time.Sleep(50 * time.Millisecond)
+		return 1
+	}, func() error {
+		time.Sleep(50 * time.Millisecond)
+		return errors.New("expected error")
+	}, func() int {
+		time.Sleep(50 * time.Millisecond)
+		return 3
+	})
+	fmt.Println(time.Since(start))
+	fmt.Println(out)
+	fmt.Println(err)
+	// Outputs:
+	// 101.210974ms
+	// [[1] [expected error] [3]]
+	// function 1 error: expected error
 }

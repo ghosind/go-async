@@ -3,6 +3,7 @@ package async
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -127,4 +128,24 @@ func BenchmarkRace(b *testing.B) {
 	}
 
 	Race(tasks...)
+}
+
+func ExampleRace() {
+	start := time.Now()
+	out, index, err := Race(func() int {
+		time.Sleep(50 * time.Millisecond)
+		return 1
+	}, func() int {
+		time.Sleep(20 * time.Millisecond)
+		return 2
+	})
+	fmt.Println(time.Since(start))
+	fmt.Println(out)
+	fmt.Println(index)
+	fmt.Println(err)
+	// Outputs:
+	// 20.678486ms
+	// [2]
+	// 1
+	// <nil>
 }

@@ -3,6 +3,7 @@ package async
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/ghosind/go-assert"
@@ -63,4 +64,23 @@ func TestForeverWithContext(t *testing.T) {
 	a.EqualNow(err, done)
 	a.EqualNow(i, 5)
 	a.EqualNow(v, []int{0, 0, 1, 1})
+}
+
+func ExampleForever() {
+	err := Forever(func(ctx context.Context, next func(context.Context)) error {
+		val := ctx.Value("key")
+		if val == nil {
+			//lint:ignore SA1029 for test case only
+			next(context.WithValue(ctx, "key", 1))
+		} else if v := val.(int); v < 5 {
+			//lint:ignore SA1029 for test case only
+			next(context.WithValue(ctx, "key", v+1))
+		} else {
+			return errors.New("value is 5")
+		}
+
+		return nil
+	})
+	fmt.Println(err)
+	// value is 5
 }

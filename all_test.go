@@ -3,6 +3,7 @@ package async
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -107,6 +108,20 @@ func BenchmarkAll(b *testing.B) {
 	}
 
 	All(tasks...)
+}
+
+func ExampleAll() {
+	out, err := All(func() int {
+		time.Sleep(100 * time.Millisecond)
+		return 1
+	}, func() int {
+		return 2
+	})
+	fmt.Println(out)
+	fmt.Println(err)
+	// Output:
+	// [[1] [2]]
+	// <nil>
 }
 
 func TestAllCompletedWithoutFuncs(t *testing.T) {
@@ -217,4 +232,18 @@ func BenchmarkAllCompleted(b *testing.B) {
 	}
 
 	AllCompleted(tasks...)
+}
+
+func ExampleAllCompleted() {
+	out, err := AllCompleted(func() (int, error) {
+		time.Sleep(100 * time.Millisecond)
+		return 1, nil
+	}, func() error {
+		return errors.New("expected error")
+	})
+	fmt.Println(out)
+	fmt.Println(err)
+	// Outputs:
+	// [[1 <nil>] [expected error]]
+	// function 1 error: expected error
 }
