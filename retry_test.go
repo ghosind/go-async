@@ -3,6 +3,7 @@ package async
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -135,4 +136,24 @@ func TestRetryWithContext(t *testing.T) {
 	)
 	a.NilNow(err)
 	a.EqualNow(out, []any{1, nil})
+}
+
+func ExampleRetry() {
+	i := 0
+
+	out, err := Retry(func() error {
+		i++
+		if i != 3 {
+			return errors.New("i != 3")
+		} else {
+			return nil
+		}
+	})
+	fmt.Println(i)
+	fmt.Println(out)
+	fmt.Println(err)
+	// Outputs:
+	// 3
+	// [<nil>]
+	// <nil>
 }

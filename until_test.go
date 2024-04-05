@@ -3,6 +3,7 @@ package async
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -107,4 +108,22 @@ func TestUntilWithContext(t *testing.T) {
 	dur := time.Since(start)
 	a.GteNow(dur, 100*time.Millisecond)
 	a.LteNow(dur, 150*time.Millisecond)
+}
+
+func ExampleUntil() {
+	i := 0
+
+	out, err := Until(func(n int) bool {
+		return n < 3
+	}, func() int {
+		i++
+		return i
+	})
+	fmt.Println(i)
+	fmt.Println(out)
+	fmt.Println(err)
+	// Outputs:
+	// 3
+	// [3]
+	// <nil>
 }

@@ -3,6 +3,7 @@ package async
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -97,4 +98,21 @@ func TestWhileWithContext(t *testing.T) {
 	dur := time.Since(start)
 	a.GteNow(dur, 100*time.Millisecond)
 	a.LteNow(dur, 150*time.Millisecond)
+}
+
+func ExampleWhile() {
+	i := 0
+
+	out, err := While(func() bool {
+		return i < 3
+	}, func() {
+		i++
+	})
+	fmt.Println(i)
+	fmt.Println(out)
+	fmt.Println(err)
+	// Outputs:
+	// 3
+	// []
+	// <nil>
 }
