@@ -1,4 +1,4 @@
-package async
+package async_test
 
 import (
 	"context"
@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/ghosind/go-assert"
+	"github.com/ghosind/go-async"
 )
 
 func TestAllWithoutFuncs(t *testing.T) {
 	a := assert.New(t)
 
-	out, err := All()
+	out, err := async.All()
 	a.NilNow(err)
 	a.NilNow(out)
 }
@@ -22,7 +23,7 @@ func TestAllSuccess(t *testing.T) {
 	a := assert.New(t)
 
 	data := make([]bool, 5)
-	funcs := make([]AsyncFn, 0, 5)
+	funcs := make([]async.AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) (int, error) {
@@ -32,7 +33,7 @@ func TestAllSuccess(t *testing.T) {
 		})
 	}
 
-	out, err := All(funcs...)
+	out, err := async.All(funcs...)
 	a.NilNow(err)
 	a.EqualNow(data, []bool{true, true, true, true, true})
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
@@ -43,7 +44,7 @@ func TestAllFailure(t *testing.T) {
 	expectedErr := errors.New("n = 2")
 
 	data := make([]bool, 5)
-	funcs := make([]AsyncFn, 0, 5)
+	funcs := make([]async.AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) error {
@@ -56,7 +57,7 @@ func TestAllFailure(t *testing.T) {
 		})
 	}
 
-	out, err := All(funcs...)
+	out, err := async.All(funcs...)
 	a.NotNilNow(err)
 	a.EqualNow(err.Error(), "function 2 error: n = 2")
 	a.EqualNow(data, []bool{true, true, false, false, false})
@@ -67,7 +68,7 @@ func TestAllWithNilContext(t *testing.T) {
 	a := assert.New(t)
 
 	//lint:ignore SA1012 for test case only
-	out, err := AllWithContext(nil, func(ctx context.Context) error {
+	out, err := async.AllWithContext(nil, func(ctx context.Context) error {
 		time.Sleep(100 * time.Millisecond)
 		return nil
 	})
@@ -79,7 +80,7 @@ func TestAllWithTimeoutContext(t *testing.T) {
 	a := assert.New(t)
 
 	data := make([]bool, 5)
-	funcs := make([]AsyncFn, 0, 5)
+	funcs := make([]async.AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) error {
@@ -92,26 +93,26 @@ func TestAllWithTimeoutContext(t *testing.T) {
 	ctx, canFunc := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer canFunc()
 
-	out, err := AllWithContext(ctx, funcs...)
+	out, err := async.AllWithContext(ctx, funcs...)
 	a.NotNilNow(err)
-	a.TrueNow(errors.Is(err, ErrContextCanceled))
+	a.TrueNow(errors.Is(err, async.ErrContextCanceled))
 	a.EqualNow(data, []bool{true, true, false, false, false})
 	a.EqualNow(out, [][]any{{nil}, {nil}, nil, nil, nil})
 }
 
 func BenchmarkAll(b *testing.B) {
-	tasks := make([]AsyncFn, 0, 1000)
+	tasks := make([]async.AsyncFn, 0, 1000)
 	for i := 0; i < 1000; i++ {
 		tasks = append(tasks, func(ctx context.Context) error {
 			return nil
 		})
 	}
 
-	All(tasks...)
+	async.All(tasks...)
 }
 
 func ExampleAll() {
-	out, err := All(func() int {
+	out, err := async.All(func() int {
 		time.Sleep(100 * time.Millisecond)
 		return 1
 	}, func() int {
@@ -127,7 +128,7 @@ func ExampleAll() {
 func TestAllCompletedWithoutFuncs(t *testing.T) {
 	a := assert.New(t)
 
-	out, err := AllCompleted()
+	out, err := async.AllCompleted()
 	a.NilNow(err)
 	a.EqualNow(out, [][]any{})
 }
@@ -136,7 +137,7 @@ func TestAllCompletedSuccess(t *testing.T) {
 	a := assert.New(t)
 
 	data := make([]bool, 5)
-	funcs := make([]AsyncFn, 0, 5)
+	funcs := make([]async.AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) (int, error) {
@@ -146,7 +147,7 @@ func TestAllCompletedSuccess(t *testing.T) {
 		})
 	}
 
-	out, err := AllCompleted(funcs...)
+	out, err := async.AllCompleted(funcs...)
 	a.NilNow(err)
 	a.EqualNow(data, []bool{true, true, true, true, true})
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, nil}, {3, nil}, {4, nil}})
@@ -158,7 +159,7 @@ func TestAllCompletedPartialFailure(t *testing.T) {
 	errNIs2 := errors.New("n = 2")
 
 	data := make([]bool, 5)
-	funcs := make([]AsyncFn, 0, 5)
+	funcs := make([]async.AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) (int, error) {
@@ -171,7 +172,7 @@ func TestAllCompletedPartialFailure(t *testing.T) {
 		})
 	}
 
-	out, err := AllCompleted(funcs...)
+	out, err := async.AllCompleted(funcs...)
 	a.NotNilNow(err)
 	a.EqualNow(err.Error(), "function 2 error: n = 2")
 	a.EqualNow(data, []bool{true, true, false, true, true})
@@ -182,7 +183,7 @@ func TestAllCompletedWithNilContext(t *testing.T) {
 	a := assert.New(t)
 
 	//lint:ignore SA1012 for test case only
-	out, err := AllCompletedWithContext(nil, func(ctx context.Context) error {
+	out, err := async.AllCompletedWithContext(nil, func(ctx context.Context) error {
 		time.Sleep(100 * time.Millisecond)
 		return nil
 	})
@@ -196,7 +197,7 @@ func TestAllCompletedWithTimeoutContext(t *testing.T) {
 	errTimeout := errors.New("timeout")
 
 	data := make([]bool, 5)
-	funcs := make([]AsyncFn, 0, 5)
+	funcs := make([]async.AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) (int, error) {
@@ -214,7 +215,7 @@ func TestAllCompletedWithTimeoutContext(t *testing.T) {
 	ctx, canFunc := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer canFunc()
 
-	out, err := AllCompletedWithContext(ctx, funcs...)
+	out, err := async.AllCompletedWithContext(ctx, funcs...)
 	a.NotNilNow(err)
 	a.EqualNow(err.Error(), `function 2 error: timeout
 function 3 error: timeout
@@ -224,18 +225,18 @@ function 4 error: timeout`)
 }
 
 func BenchmarkAllCompleted(b *testing.B) {
-	tasks := make([]AsyncFn, 0, 1000)
+	tasks := make([]async.AsyncFn, 0, 1000)
 	for i := 0; i < 1000; i++ {
 		tasks = append(tasks, func(ctx context.Context) error {
 			return nil
 		})
 	}
 
-	AllCompleted(tasks...)
+	async.AllCompleted(tasks...)
 }
 
 func ExampleAllCompleted() {
-	out, err := AllCompleted(func() (int, error) {
+	out, err := async.AllCompleted(func() (int, error) {
 		time.Sleep(100 * time.Millisecond)
 		return 1, nil
 	}, func() error {

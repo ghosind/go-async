@@ -1,4 +1,4 @@
-package async
+package async_test
 
 import (
 	"context"
@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/ghosind/go-assert"
+	"github.com/ghosind/go-async"
 )
 
 func TestRetry(t *testing.T) {
 	a := assert.New(t)
 	i := 0
 
-	out, err := Retry(func() (int, error) {
+	out, err := async.Retry(func() (int, error) {
 		i++
 		return i, nil
 	})
@@ -26,7 +27,7 @@ func TestRetryWithFailed(t *testing.T) {
 	a := assert.New(t)
 	i := 0
 
-	out, err := Retry(func() (int, error) {
+	out, err := async.Retry(func() (int, error) {
 		i++
 		if i != 3 {
 			return 0, errors.New("not 3")
@@ -41,7 +42,7 @@ func TestRetryAlwaysFailed(t *testing.T) {
 	a := assert.New(t)
 	expected := errors.New("expected error")
 
-	out, err := Retry(func() (int, error) {
+	out, err := async.Retry(func() (int, error) {
 		return 0, expected
 	})
 	a.EqualNow(err, expected)
@@ -53,10 +54,10 @@ func TestRetryWithTimes(t *testing.T) {
 	expected := errors.New("expected error")
 	i := 0
 
-	out, err := Retry(func() (int, error) {
+	out, err := async.Retry(func() (int, error) {
 		i++
 		return 0, expected
-	}, RetryOptions{
+	}, async.RetryOptions{
 		Times: 3,
 	})
 	a.EqualNow(err, expected)
@@ -69,9 +70,9 @@ func TestRetryWithInterval(t *testing.T) {
 	expected := errors.New("expected error")
 
 	start := time.Now()
-	out, err := Retry(func() (int, error) {
+	out, err := async.Retry(func() (int, error) {
 		return 0, expected
-	}, RetryOptions{
+	}, async.RetryOptions{
 		Interval: 100,
 	})
 	a.EqualNow(err, expected)
@@ -87,9 +88,9 @@ func TestRetryWithIntervalFunc(t *testing.T) {
 	expected := errors.New("expected error")
 
 	start := time.Now()
-	out, err := Retry(func() (int, error) {
+	out, err := async.Retry(func() (int, error) {
 		return 0, expected
-	}, RetryOptions{
+	}, async.RetryOptions{
 		IntervalFunc: func(n int) int {
 			return n * 50
 		},
@@ -107,14 +108,14 @@ func TestRetryWithErrorFilter(t *testing.T) {
 	expected := errors.New("expected error")
 	i := 0
 
-	out, err := Retry(func() error {
+	out, err := async.Retry(func() error {
 		i++
 		if i == 3 {
 			return expected
 		} else {
 			return errors.New("not 3")
 		}
-	}, RetryOptions{
+	}, async.RetryOptions{
 		ErrorFilter: func(err error) bool {
 			return !errors.Is(err, expected)
 		},
@@ -126,7 +127,7 @@ func TestRetryWithErrorFilter(t *testing.T) {
 func TestRetryWithContext(t *testing.T) {
 	a := assert.New(t)
 
-	out, err := RetryWithContext(
+	out, err := async.RetryWithContext(
 		//lint:ignore SA1029 for test case only
 		context.WithValue(context.Background(), "key", 1),
 		func(ctx context.Context) (int, error) {
@@ -141,7 +142,7 @@ func TestRetryWithContext(t *testing.T) {
 func ExampleRetry() {
 	i := 0
 
-	out, err := Retry(func() error {
+	out, err := async.Retry(func() error {
 		i++
 		if i != 3 {
 			return errors.New("i != 3")

@@ -1,4 +1,4 @@
-package async
+package async_test
 
 import (
 	"context"
@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/ghosind/go-assert"
+	"github.com/ghosind/go-async"
 )
 
 func TestUntil(t *testing.T) {
 	a := assert.New(t)
 	count := 0
 
-	out, err := Until(func(c int) bool {
+	out, err := async.Until(func(c int) bool {
 		return c < 5
 	}, func() int {
 		count++
@@ -28,35 +29,35 @@ func TestUntilInvalidParameters(t *testing.T) {
 	a := assert.New(t)
 
 	a.PanicOfNow(func() {
-		Until(nil, func() {})
-	}, ErrNotFunction)
+		async.Until(nil, func() {})
+	}, async.ErrNotFunction)
 	a.PanicOfNow(func() {
-		Until(func() {}, nil)
-	}, ErrNotFunction)
+		async.Until(func() {}, nil)
+	}, async.ErrNotFunction)
 	a.PanicOfNow(func() {
-		Until(1, "hello")
-	}, ErrNotFunction)
+		async.Until(1, "hello")
+	}, async.ErrNotFunction)
 	a.PanicOfNow(func() {
-		Until(func() {}, func() {})
-	}, ErrInvalidTestFunc)
+		async.Until(func() {}, func() {})
+	}, async.ErrInvalidTestFunc)
 	a.NotPanicNow(func() {
-		Until(func() bool { return false }, func() {})
+		async.Until(func() bool { return false }, func() {})
 	})
 	a.NotPanicNow(func() {
-		Until(func(err error) bool { return false }, func() error { return nil })
+		async.Until(func(err error) bool { return false }, func() error { return nil })
 	})
 	a.NotPanicNow(func() {
-		Until(func(ctx context.Context, err error) bool { return false }, func() error { return nil })
+		async.Until(func(ctx context.Context, err error) bool { return false }, func() error { return nil })
 	})
 	a.NotPanicNow(func() {
-		Until(func(ctx context.Context) bool { return false }, func() error { return nil })
+		async.Until(func(ctx context.Context) bool { return false }, func() error { return nil })
 	})
 	a.PanicOfNow(func() {
-		Until(func(ctx context.Context, i int) bool { return false }, func() error { return nil })
-	}, ErrInvalidTestFunc)
+		async.Until(func(ctx context.Context, i int) bool { return false }, func() error { return nil })
+	}, async.ErrInvalidTestFunc)
 	a.PanicOfNow(func() {
-		Until(func(ctx context.Context, i int) bool { return false }, func() {})
-	}, ErrInvalidTestFunc)
+		async.Until(func(ctx context.Context, i int) bool { return false }, func() {})
+	}, async.ErrInvalidTestFunc)
 }
 
 func TestUntilWithFunctionError(t *testing.T) {
@@ -64,7 +65,7 @@ func TestUntilWithFunctionError(t *testing.T) {
 	count := 0
 	unexpectedErr := errors.New("unexpected error")
 
-	out, err := Until(func(c int, err error) bool {
+	out, err := async.Until(func(c int, err error) bool {
 		return c < 5
 	}, func() (int, error) {
 		count++
@@ -78,7 +79,7 @@ func TestUntilWithTestFunctionError(t *testing.T) {
 	a := assert.New(t)
 	expectedErr := errors.New("expected error")
 
-	out, err := Until(func(n int) bool {
+	out, err := async.Until(func(n int) bool {
 		panic(expectedErr)
 	}, func() int {
 		return 0
@@ -94,7 +95,7 @@ func TestUntilWithContext(t *testing.T) {
 	defer canFunc()
 
 	start := time.Now()
-	out, err := UntilWithContext(ctx, func(ctx context.Context) bool {
+	out, err := async.UntilWithContext(ctx, func(ctx context.Context) bool {
 		select {
 		case <-ctx.Done():
 			return false
@@ -113,7 +114,7 @@ func TestUntilWithContext(t *testing.T) {
 func ExampleUntil() {
 	i := 0
 
-	out, err := Until(func(n int) bool {
+	out, err := async.Until(func(n int) bool {
 		return n < 3
 	}, func() int {
 		i++

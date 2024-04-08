@@ -1,4 +1,4 @@
-package async
+package async_test
 
 import (
 	"context"
@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/ghosind/go-assert"
+	"github.com/ghosind/go-async"
 )
 
 func TestWhile(t *testing.T) {
 	a := assert.New(t)
 	count := 0
 
-	out, err := While(func() bool {
+	out, err := async.While(func() bool {
 		return count < 5
 	}, func() int {
 		count++
@@ -28,33 +29,33 @@ func TestWhileInvalidParameters(t *testing.T) {
 	a := assert.New(t)
 
 	a.PanicOfNow(func() {
-		While(nil, func() {})
-	}, ErrNotFunction)
+		async.While(nil, func() {})
+	}, async.ErrNotFunction)
 	a.PanicOfNow(func() {
-		While(func() {}, nil)
-	}, ErrNotFunction)
+		async.While(func() {}, nil)
+	}, async.ErrNotFunction)
 	a.PanicOfNow(func() {
-		While(1, "hello")
-	}, ErrNotFunction)
+		async.While(1, "hello")
+	}, async.ErrNotFunction)
 	a.PanicOfNow(func() {
-		While(func() {}, func() {})
-	}, ErrInvalidTestFunc)
+		async.While(func() {}, func() {})
+	}, async.ErrInvalidTestFunc)
 	a.NotPanicNow(func() {
-		While(func() bool { return false }, func() {})
+		async.While(func() bool { return false }, func() {})
 	})
 	a.NotPanicNow(func() {
-		While(func(ctx context.Context) bool { return false }, func() {})
+		async.While(func(ctx context.Context) bool { return false }, func() {})
 	})
 	a.PanicOfNow(func() {
-		While(func(ctx context.Context, i int) bool { return false }, func() {})
-	}, ErrInvalidTestFunc)
+		async.While(func(ctx context.Context, i int) bool { return false }, func() {})
+	}, async.ErrInvalidTestFunc)
 }
 
 func TestWhileWithTestFunctionError(t *testing.T) {
 	a := assert.New(t)
 	expectedErr := errors.New("expected error")
 
-	out, err := While(func() bool {
+	out, err := async.While(func() bool {
 		panic(expectedErr)
 	}, func() int {
 		return 0
@@ -68,7 +69,7 @@ func TestWhileWithFunctionError(t *testing.T) {
 	a := assert.New(t)
 	expectedErr := errors.New("expected error")
 
-	out, err := While(func() bool {
+	out, err := async.While(func() bool {
 		return true
 	}, func() (int, error) {
 		return 0, expectedErr
@@ -84,7 +85,7 @@ func TestWhileWithContext(t *testing.T) {
 	defer canFunc()
 
 	start := time.Now()
-	out, err := WhileWithContext(ctx, func(ctx context.Context) bool {
+	out, err := async.WhileWithContext(ctx, func(ctx context.Context) bool {
 		select {
 		case <-ctx.Done():
 			return false
@@ -103,7 +104,7 @@ func TestWhileWithContext(t *testing.T) {
 func ExampleWhile() {
 	i := 0
 
-	out, err := While(func() bool {
+	out, err := async.While(func() bool {
 		return i < 3
 	}, func() {
 		i++

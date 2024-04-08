@@ -1,4 +1,4 @@
-package async
+package async_test
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ghosind/go-assert"
+	"github.com/ghosind/go-async"
 )
 
 func TestForever(t *testing.T) {
@@ -16,7 +17,7 @@ func TestForever(t *testing.T) {
 	v := make([]int, 0)
 	done := errors.New("done")
 
-	err := Forever(func(ctx context.Context, next func(context.Context)) error {
+	err := async.Forever(func(ctx context.Context, next func(context.Context)) error {
 		i++
 		if i == 5 {
 			return done
@@ -44,7 +45,7 @@ func TestForeverWithContext(t *testing.T) {
 	//lint:ignore SA1029 for test case only
 	ctx := context.WithValue(context.Background(), "key", 0)
 
-	err := ForeverWithContext(ctx, func(ctx context.Context, next func(context.Context)) error {
+	err := async.ForeverWithContext(ctx, func(ctx context.Context, next func(context.Context)) error {
 		i++
 		if i == 5 {
 			return done
@@ -67,7 +68,7 @@ func TestForeverWithContext(t *testing.T) {
 }
 
 func ExampleForever() {
-	err := Forever(func(ctx context.Context, next func(context.Context)) error {
+	err := async.Forever(func(ctx context.Context, next func(context.Context)) error {
 		val := ctx.Value("key")
 		if val == nil {
 			//lint:ignore SA1029 for test case only

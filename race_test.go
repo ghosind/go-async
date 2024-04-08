@@ -1,4 +1,4 @@
-package async
+package async_test
 
 import (
 	"context"
@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/ghosind/go-assert"
+	"github.com/ghosind/go-async"
 )
 
 func TestRaceWithoutFuncs(t *testing.T) {
 	a := assert.New(t)
 
-	out, index, err := Race()
+	out, index, err := async.Race()
 	a.NilNow(err)
 	a.EqualNow(index, -1)
 	a.NilNow(out)
@@ -23,7 +24,7 @@ func TestRace(t *testing.T) {
 	a := assert.New(t)
 
 	data := make([]bool, 5)
-	funcs := make([]AsyncFn, 0, 5)
+	funcs := make([]async.AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) (int, error) {
@@ -33,7 +34,7 @@ func TestRace(t *testing.T) {
 		})
 	}
 
-	out, index, err := Race(funcs...)
+	out, index, err := async.Race(funcs...)
 	a.NilNow(err)
 	a.EqualNow(index, 0)
 	a.EqualNow(data, []bool{true, false, false, false, false})
@@ -47,7 +48,7 @@ func TestRaceWithFailed(t *testing.T) {
 	a := assert.New(t)
 
 	data := make([]bool, 5)
-	funcs := make([]AsyncFn, 0, 5)
+	funcs := make([]async.AsyncFn, 0, 5)
 	expectedErr := errors.New("expected error")
 	for i := 0; i < 5; i++ {
 		n := i
@@ -63,7 +64,7 @@ func TestRaceWithFailed(t *testing.T) {
 		})
 	}
 
-	out, index, err := Race(funcs...)
+	out, index, err := async.Race(funcs...)
 	a.NotNilNow(err)
 	a.EqualNow(err.Error(), "function 2 error: expected error")
 	a.EqualNow(index, 2)
@@ -78,7 +79,7 @@ func TestRaceWithNilContext(t *testing.T) {
 	a := assert.New(t)
 
 	//lint:ignore SA1012 for test case only
-	out, index, err := RaceWithContext(nil, func(ctx context.Context) error {
+	out, index, err := async.RaceWithContext(nil, func(ctx context.Context) error {
 		time.Sleep(100 * time.Millisecond)
 		return nil
 	})
@@ -91,7 +92,7 @@ func TestRaceWithContext(t *testing.T) {
 	a := assert.New(t)
 
 	data := make([]bool, 5)
-	funcs := make([]AsyncFn, 0, 5)
+	funcs := make([]async.AsyncFn, 0, 5)
 	for i := 0; i < 5; i++ {
 		n := i
 		funcs = append(funcs, func(ctx context.Context) (int, error) {
@@ -109,7 +110,7 @@ func TestRaceWithContext(t *testing.T) {
 	ctx, canFunc := context.WithTimeout(context.Background(), 170*time.Millisecond)
 	defer canFunc()
 
-	out, index, err := RaceWithContext(ctx, funcs...)
+	out, index, err := async.RaceWithContext(ctx, funcs...)
 	a.NilNow(err)
 	a.EqualNow(index, 0)
 	a.EqualNow(data, []bool{true, false, false, false, false})
@@ -120,19 +121,19 @@ func TestRaceWithContext(t *testing.T) {
 }
 
 func BenchmarkRace(b *testing.B) {
-	tasks := make([]AsyncFn, 0, 1000)
+	tasks := make([]async.AsyncFn, 0, 1000)
 	for i := 0; i < 1000; i++ {
 		tasks = append(tasks, func(ctx context.Context) error {
 			return nil
 		})
 	}
 
-	Race(tasks...)
+	async.Race(tasks...)
 }
 
 func ExampleRace() {
 	start := time.Now()
-	out, index, err := Race(func() int {
+	out, index, err := async.Race(func() int {
 		time.Sleep(50 * time.Millisecond)
 		return 1
 	}, func() int {
