@@ -153,7 +153,7 @@ func ExampleRetry() {
 	fmt.Println(i)
 	fmt.Println(out)
 	fmt.Println(err)
-	// Outputs:
+	// Output:
 	// 3
 	// [<nil>]
 	// <nil>

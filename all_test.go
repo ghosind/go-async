@@ -244,7 +244,7 @@ func ExampleAllCompleted() {
 	})
 	fmt.Println(out)
 	fmt.Println(err)
-	// Outputs:
+	// Output:
 	// [[1 <nil>] [expected error]]
 	// function 1 error: expected error
 }

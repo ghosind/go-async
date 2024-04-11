@@ -157,7 +157,6 @@ func BenchmarkParallel(b *testing.B) {
 }
 
 func ExampleParallel() {
-	start := time.Now()
 	out, err := async.Parallel(2, func() int {
 		time.Sleep(50 * time.Millisecond)
 		return 1
@@ -168,11 +167,9 @@ func ExampleParallel() {
 		time.Sleep(50 * time.Millisecond)
 		return 3
 	})
-	fmt.Println(time.Since(start))
 	fmt.Println(out)
 	fmt.Println(err)
-	// Outputs:
-	// 101.210974ms
+	// Output:
 	// [[1] [2] [3]]
 	// <nil>
 }
@@ -336,7 +333,6 @@ func BenchmarkParallelCompleted(b *testing.B) {
 }
 
 func ExampleParallelCompleted() {
-	start := time.Now()
 	out, err := async.ParallelCompleted(2, func() int {
 		time.Sleep(50 * time.Millisecond)
 		return 1
@@ -347,11 +343,9 @@ func ExampleParallelCompleted() {
 		time.Sleep(50 * time.Millisecond)
 		return 3
 	})
-	fmt.Println(time.Since(start))
 	fmt.Println(out)
 	fmt.Println(err)
-	// Outputs:
-	// 101.210974ms
+	// Output:
 	// [[1] [expected error] [3]]
 	// function 1 error: expected error
 }

@@ -123,7 +123,7 @@ func ExampleUntil() {
 	fmt.Println(i)
 	fmt.Println(out)
 	fmt.Println(err)
-	// Outputs:
+	// Output:
 	// 3
 	// [3]
 	// <nil>
