@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/ghosind/utils"
+	"github.com/ghosind/go-try"
 )
 
 // AsyncFn is the function to run, the function can be a function without any restriction that accepts any parameters and any return values. For the best practice, please define the function like the following styles:
@@ -100,13 +100,15 @@ func invokeAsyncFn(fn AsyncFn, ctx context.Context, params []any) ([]any, error)
 	in := makeFuncIn(ft, ctx, params)
 
 	numRet := ft.NumOut()
-	ret := make([]any, 0, numRet)
+	ret := make([]any, numRet)
 
-	err := utils.Try(func() error {
+	_, err := try.Try(func() {
 		out = fv.Call(in)
-		return nil
 	})
 	if err != nil {
+		for i := 0; i < numRet; i++ {
+			ret[i] = reflect.Zero(ft.Out(i)).Interface()
+		}
 		return ret, err
 	}
 
@@ -118,7 +120,7 @@ func invokeAsyncFn(fn AsyncFn, ctx context.Context, params []any) ([]any, error)
 		}
 	}
 	for i := 0; i < numRet; i++ {
-		ret = append(ret, out[i].Interface())
+		ret[i] = out[i].Interface()
 	}
 
 	return ret, err

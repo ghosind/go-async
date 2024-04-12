@@ -98,6 +98,12 @@ func TestInvokeAsyncFn(t *testing.T) {
 	ret, err = invokeAsyncFn(func() (int, string, error) { return 1, "test", nil }, ctx, nil)
 	a.NilNow(err)
 	a.EqualNow(ret, []any{1, "test", nil})
+
+	ret, err = invokeAsyncFn(func() int {
+		panic(expectErr)
+	}, ctx, nil)
+	a.EqualNow(err, expectErr)
+	a.EqualNow(ret, []any{0})
 }
 
 func TestInvokeAsyncFnWithParams(t *testing.T) {
