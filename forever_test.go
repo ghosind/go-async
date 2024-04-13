@@ -83,5 +83,6 @@ func ExampleForever() {
 		return nil
 	})
 	fmt.Println(err)
+	// Output:
 	// value is 5
 }
