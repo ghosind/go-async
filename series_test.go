@@ -63,13 +63,13 @@ func TestSeriesWithContext(t *testing.T) {
 			case <-ctx.Done():
 				return timeoutErr
 			default:
-				time.Sleep(10 * time.Millisecond)
+				time.Sleep(50 * time.Millisecond)
 				return nil
 			}
 		})
 	}
 
-	ctx, canFunc := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	ctx, canFunc := context.WithTimeout(context.Background(), 75*time.Millisecond)
 	defer canFunc()
 
 	out, err := async.SeriesWithContext(ctx, tasks...)
