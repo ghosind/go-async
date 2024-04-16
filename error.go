@@ -54,7 +54,7 @@ func (e *executionError) Err() error {
 
 // Error returns the execution error message.
 func (e *executionError) Error() string {
-	return fmt.Sprintf("function %d error: %s", e.index, e.err)
+	return fmt.Sprintf("function %d error: %s", e.index, e.err.Error())
 }
 
 // ExecutionErrors is an array of ExecutionError.
