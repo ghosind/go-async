@@ -52,8 +52,7 @@ func TestTimesWithContext(t *testing.T) {
 	a.EqualNow(out, make([][]any, 5))
 	a.EqualNow(i.Load(), 5)
 
-	ctx, canFunc := context.WithTimeout(context.Background(), 20*time.Millisecond)
-	defer canFunc()
+	ctx, canFunc := context.WithCancel(context.Background())
 	finished := make([]int32, 0, 5)
 	i = atomic.Int32{}
 
@@ -65,10 +64,11 @@ func TestTimesWithContext(t *testing.T) {
 			return
 		default:
 			finished = append(finished, tmp)
+			canFunc()
 		}
 	})
 	a.EqualNow(err, async.ErrContextCanceled)
-	a.NotContainsElementNow(finished, 3)
+	a.EqualNow(finished, []int32{1})
 }
 
 func ExampleTimes() {
