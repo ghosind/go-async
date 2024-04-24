@@ -100,7 +100,7 @@ func validateSeqFuncParams(prev, cur reflect.Type) error {
 			if pout[i] != cin[j] {
 				return ErrInvalidSeqFuncs
 			}
-			// i++
+			i++
 		}
 		j++
 	} else if prev.NumOut() != cur.NumIn() {
