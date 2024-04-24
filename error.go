@@ -20,6 +20,8 @@ var (
 	ErrUnmatchedParam error = errors.New("parameters are unmatched")
 	// ErrInvalidTestFunc indicates the test function is invalid.
 	ErrInvalidTestFunc error = errors.New("invalid test function")
+	// ErrInvalidSeqFuncs indicates the functions in the Seq lists are not match.
+	ErrInvalidSeqFuncs error = errors.New("invalid seq functions")
 )
 
 type ExecutionError interface {
