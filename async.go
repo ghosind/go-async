@@ -135,7 +135,13 @@ func invokeAsyncFn(fn AsyncFn, ctx context.Context, params []any) ([]any, error)
 func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Value {
 	numIn := ft.NumIn()
 	isTakeContext := isFuncTakesContext(ft)
-	if isTakeContext {
+	isFirstParamContext := false
+	if isTakeContext && len(params) > 0 && len(params) >= numIn {
+		ty := reflect.TypeOf(params[0])
+		isFirstParamContext = ty == nil || reflect.TypeOf(params[0]).Implements(contextType)
+	}
+
+	if isTakeContext && !isFirstParamContext {
 		numIn--
 	}
 	if numIn != len(params) {
@@ -145,7 +151,7 @@ func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Va
 	in := make([]reflect.Value, ft.NumIn())
 	i := 0 // index of the input parameter list
 
-	if isTakeContext {
+	if isTakeContext && !isFirstParamContext {
 		// prepend context to the input parameter list
 		in[i] = reflect.ValueOf(ctx)
 		i++
