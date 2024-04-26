@@ -88,6 +88,17 @@ func isFuncReturnsError(fn reflect.Type) bool {
 	return true
 }
 
+// isFirstParamContext checks the any type slice, and return true if the first element in the slice
+// is a context object.
+func isFirstParamContext(params []any, numIn int) bool {
+	if len(params) == 0 || len(params) < numIn {
+		return false
+	}
+
+	ty := reflect.TypeOf(params[0])
+	return ty == nil || ty.Implements(contextType)
+}
+
 // invokeAsyncFn tries to call the function with the specified parameters, and it'll also set the
 // context if it is the function's first parameter. After the function is finished, it will return
 // a return values array and the error. It will store the return values into the out array without
@@ -135,13 +146,9 @@ func invokeAsyncFn(fn AsyncFn, ctx context.Context, params []any) ([]any, error)
 func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Value {
 	numIn := ft.NumIn()
 	isTakeContext := isFuncTakesContext(ft)
-	isFirstParamContext := false
-	if isTakeContext && len(params) > 0 && len(params) >= numIn {
-		ty := reflect.TypeOf(params[0])
-		isFirstParamContext = ty == nil || reflect.TypeOf(params[0]).Implements(contextType)
-	}
+	isContextParam := isTakeContext && isFirstParamContext(params, numIn)
 
-	if isTakeContext && !isFirstParamContext {
+	if isTakeContext && !isContextParam {
 		numIn--
 	}
 	if numIn != len(params) {
@@ -151,7 +158,7 @@ func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Va
 	in := make([]reflect.Value, ft.NumIn())
 	i := 0 // index of the input parameter list
 
-	if isTakeContext && !isFirstParamContext {
+	if isTakeContext && !isContextParam {
 		// prepend context to the input parameter list
 		in[i] = reflect.ValueOf(ctx)
 		i++
