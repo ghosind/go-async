@@ -137,17 +137,13 @@ func invokeAsyncFn(fn AsyncFn, ctx context.Context, params []any) ([]any, error)
 	return ret, err
 }
 
-// makeFuncIn checks the parameters of the function and the params slice from the caller, and
-// returns a reflect.Value slice of the input parameters. It'll prepend the context to the
-// parameter list if the function's first parameter is a context.
-//
-// The function will panic an unmatched param error if the number of parameters is not equal to the
-// param list, or some elements' types of parameters are not match.
-func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Value {
+func makeNonVariadicFuncIn(
+	ft reflect.Type,
+	ctx context.Context,
+	params []any,
+	isTakeContext, isContextParam bool,
+) []reflect.Value {
 	numIn := ft.NumIn()
-	isTakeContext := isFuncTakesContext(ft)
-	isContextParam := isTakeContext && isFirstParamContext(params, numIn)
-
 	if isTakeContext && !isContextParam {
 		numIn--
 	}
@@ -193,4 +189,21 @@ func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Va
 	}
 
 	return in
+}
+
+// makeFuncIn checks the parameters of the function and the params slice from the caller, and
+// returns a reflect.Value slice of the input parameters. It'll prepend the context to the
+// parameter list if the function's first parameter is a context.
+//
+// The function will panic an unmatched param error if the number of parameters is not equal to the
+// param list, or some elements' types of parameters are not match.
+func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Value {
+	isTakeContext := isFuncTakesContext(ft)
+	isContextParam := isTakeContext && isFirstParamContext(params, ft.NumIn())
+
+	if !ft.IsVariadic() {
+		return makeNonVariadicFuncIn(ft, ctx, params, isTakeContext, isContextParam)
+	} else {
+		panic("variadic function unsupported")
+	}
 }

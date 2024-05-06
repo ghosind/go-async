@@ -111,6 +111,10 @@ func TestInvokeAsyncFn(t *testing.T) {
 	a.NilNow(err)
 	a.EqualNow(ret, []any{})
 
+	a.PanicOfNow(func() {
+		invokeAsyncFn(func(ctx context.Context, vals ...int) {}, ctx, []any{nil})
+	}, "variadic function unsupported")
+
 	ret, err = invokeAsyncFn(func() int {
 		panic(expectErr)
 	}, ctx, nil)
