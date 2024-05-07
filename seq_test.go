@@ -46,7 +46,19 @@ func TestSeqCheckFuncs(t *testing.T) {
 	a.NilNow(err)
 	_, err = async.Seq(func() {}, func(ctx context.Context) {})
 	a.NilNow(err)
-	_, err = async.Seq(func() (context.Context, int) { return nil, 1 }, func(ctx context.Context, n int) {})
+	_, err = async.Seq(
+		func() (context.Context, int) { return nil, 1 },
+		func(ctx context.Context, n int) {},
+	)
+	a.NilNow(err)
+	_, err = async.Seq(
+		func() (context.Context, int, error) { return nil, 1, nil },
+		func(ctx context.Context, n int) {},
+	)
+	a.NilNow(err)
+	_, err = async.Seq(func() int { return 1 }, func() {})
+	a.NilNow(err)
+	_, err = async.Seq(func() string { return "" }, func(ctx context.Context) {})
 	a.NilNow(err)
 	_, err = async.Seq(nil)
 	a.EqualNow(err, async.ErrNotFunction)
@@ -54,13 +66,11 @@ func TestSeqCheckFuncs(t *testing.T) {
 	a.EqualNow(err, async.ErrNotFunction)
 	_, err = async.Seq(func() {}, nil)
 	a.EqualNow(err, async.ErrNotFunction)
-	_, err = async.Seq(func() int { return 1 }, func() {})
-	a.EqualNow(err, async.ErrInvalidSeqFuncs)
 	_, err = async.Seq(func() {}, func(n int) {})
 	a.EqualNow(err, async.ErrInvalidSeqFuncs)
 	_, err = async.Seq(func() string { return "" }, func(n int) {})
 	a.EqualNow(err, async.ErrInvalidSeqFuncs)
-	_, err = async.Seq(func() string { return "" }, func(ctx context.Context) {})
+	_, err = async.Seq(func() string { return "" }, func(ctx context.Context, s string, n int) {})
 	a.EqualNow(err, async.ErrInvalidSeqFuncs)
 }
 
