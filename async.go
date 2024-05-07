@@ -7,7 +7,9 @@ import (
 	"github.com/ghosind/go-try"
 )
 
-// AsyncFn is the function to run, the function can be a function without any restriction that accepts any parameters and any return values. For the best practice, please define the function like the following styles:
+// AsyncFn is the function to run, the function can be a function without any restriction that
+// accepts any parameters and any return values. For the best practice, please define the function
+// like the following styles:
 //
 //	func(context.Context) error
 //	func(context.Context) (out_type, error)
@@ -57,6 +59,12 @@ func validateAsyncFuncs(funcs ...AsyncFn) {
 	}
 }
 
+// isContextType returns a boolean value to indicates whether the type is context or not.
+func isContextType(ty reflect.Type) bool {
+	return ty.Kind() == reflect.Interface &&
+		ty.Implements(contextType) && contextType.Implements(ty)
+}
+
 // isFuncTakesContext checks the function takes a Context as the first argument.
 func isFuncTakesContext(fn reflect.Type) bool {
 	if fn.NumIn() <= 0 {
@@ -65,11 +73,7 @@ func isFuncTakesContext(fn reflect.Type) bool {
 
 	in := fn.In(0)
 
-	if in.Kind() != reflect.Interface || !in.Implements(contextType) || !contextType.Implements(in) {
-		return false
-	}
-
-	return true
+	return isContextType(in)
 }
 
 // isFuncReturnsError checks the last return value of the function is an error if the function
@@ -137,6 +141,25 @@ func invokeAsyncFn(fn AsyncFn, ctx context.Context, params []any) ([]any, error)
 	return ret, err
 }
 
+// makeFuncIn makes a reflected values list of the parameters to call the function.
+func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Value {
+	isTakeContext := isFuncTakesContext(ft)
+	isContextParam := isTakeContext && isFirstParamContext(params, ft.NumIn())
+
+	if !ft.IsVariadic() {
+		return makeNonVariadicFuncIn(ft, ctx, params, isTakeContext, isContextParam)
+	} else {
+		panic("variadic function unsupported")
+	}
+}
+
+// makeNonVariadicFuncIn checks the parameters of the non-variadic function and the params slice
+// from the caller, and returns a reflect.Value slice of the input parameters. It'll prepend the
+// context to the parameter list if the function's first parameter is a context and the first
+// element in the parameter list is not a context.
+//
+// The function will panic an unmatched param error if the number of parameters for the function is
+// greater to the specified parameters list, or some elements' types of parameters are not match.
 func makeNonVariadicFuncIn(
 	ft reflect.Type,
 	ctx context.Context,
@@ -147,7 +170,7 @@ func makeNonVariadicFuncIn(
 	if isTakeContext && !isContextParam {
 		numIn--
 	}
-	if numIn != len(params) {
+	if numIn > len(params) {
 		panic(ErrUnmatchedParam)
 	}
 
@@ -158,9 +181,11 @@ func makeNonVariadicFuncIn(
 		// prepend context to the input parameter list
 		in[i] = reflect.ValueOf(ctx)
 		i++
+		numIn++
 	}
 
-	for _, v := range params {
+	for j := 0; i < numIn; j++ {
+		v := params[j]
 		vt := reflect.TypeOf(v) // the type of the value
 		vv := reflect.ValueOf(v)
 		it := ft.In(i) // the type in the parameter list
@@ -189,21 +214,4 @@ func makeNonVariadicFuncIn(
 	}
 
 	return in
-}
-
-// makeFuncIn checks the parameters of the function and the params slice from the caller, and
-// returns a reflect.Value slice of the input parameters. It'll prepend the context to the
-// parameter list if the function's first parameter is a context.
-//
-// The function will panic an unmatched param error if the number of parameters is not equal to the
-// param list, or some elements' types of parameters are not match.
-func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Value {
-	isTakeContext := isFuncTakesContext(ft)
-	isContextParam := isTakeContext && isFirstParamContext(params, ft.NumIn())
-
-	if !ft.IsVariadic() {
-		return makeNonVariadicFuncIn(ft, ctx, params, isTakeContext, isContextParam)
-	} else {
-		panic("variadic function unsupported")
-	}
 }
