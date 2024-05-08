@@ -85,7 +85,7 @@ func validateSeqFuncParams(prev, cur reflect.Type) error {
 	if isTakeContext {
 		numIn--
 	}
-	if prev.NumOut() < numIn {
+	if numOut < numIn {
 		return ErrInvalidSeqFuncs
 	}
 
