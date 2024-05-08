@@ -80,6 +80,7 @@ func validateSeqFuncs(funcs ...AsyncFn) error {
 func validateSeqFuncParams(prev, cur reflect.Type) error {
 	isTakeContext := isFuncTakesContext(cur)
 	numIn := cur.NumIn()
+	numOut := prev.NumOut()
 
 	if isTakeContext {
 		numIn--
@@ -88,27 +89,18 @@ func validateSeqFuncParams(prev, cur reflect.Type) error {
 		return ErrInvalidSeqFuncs
 	}
 
-	pout := make([]reflect.Type, 0, prev.NumOut())
-	for i := 0; i < prev.NumOut(); i++ {
-		pout = append(pout, prev.Out(i))
-	}
-	cin := make([]reflect.Type, 0, cur.NumIn())
-	for i := 0; i < cur.NumIn(); i++ {
-		cin = append(cin, cur.In(i))
-	}
-
 	i := 0
 	j := 0
 
 	if isTakeContext {
-		if prev.NumOut() > 0 && isContextType(prev.Out(0)) {
+		if numOut > 0 && isContextType(prev.Out(0)) {
 			i++
 		}
+		numIn++
 		j++
 	}
-
-	for i < prev.NumOut() && j < cur.NumIn() {
-		if pout[i] != cin[j] {
+	for i < numOut && j < numIn {
+		if prev.Out(i) != cur.In(j) {
 			return ErrInvalidSeqFuncs
 		}
 		i++
