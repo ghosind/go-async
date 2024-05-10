@@ -70,31 +70,14 @@ func validateUntilFuncs(testFn, fn AsyncFn) (isNoParam bool) {
 		panic(ErrInvalidTestFunc)
 	}
 
-	ii := 0 // index of the test function input parameters list
-	oi := 0 // index of the function return values list
 	numIn := tft.NumIn()
-	isTakeContext := isFuncTakesContext(tft)
-	if isTakeContext {
-		numIn--
-		ii++
-	}
-	if numIn != 0 && numIn != ft.NumOut() {
-		panic(ErrInvalidTestFunc)
-	}
-	if numIn == 0 {
+	if numIn == 0 || (numIn == 1 && isFuncTakesContext(tft)) {
 		return true
 	}
 
-	for oi < numIn {
-		it := tft.In(ii) // type of the value in the test function input parameters list
-		ot := ft.Out(oi) // type of the value in the function return values list
-
-		if it != ot && !it.ConvertibleTo(ot) {
-			panic(ErrInvalidTestFunc)
-		}
-
-		ii++
-		oi++
+	isValid := isValidNextFunc(ft, tft)
+	if !isValid {
+		panic(ErrInvalidTestFunc)
 	}
 
 	return false

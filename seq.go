@@ -66,45 +66,10 @@ func validateSeqFuncs(funcs ...AsyncFn) error {
 	}
 
 	for i := 1; i < len(types); i++ {
-		err := validateSeqFuncParams(types[i-1], types[i])
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// validateSeqFuncParams checks the previous function's return values and the current function's
-// parameters, and returns an error if they are not match.
-func validateSeqFuncParams(prev, cur reflect.Type) error {
-	isTakeContext := isFuncTakesContext(cur)
-	numIn := cur.NumIn()
-	numOut := prev.NumOut()
-
-	if isTakeContext {
-		numIn--
-	}
-	if numOut < numIn {
-		return ErrInvalidSeqFuncs
-	}
-
-	i := 0
-	j := 0
-
-	if isTakeContext {
-		if numOut > 0 && isContextType(prev.Out(0)) {
-			i++
-		}
-		numIn++
-		j++
-	}
-	for i < numOut && j < numIn {
-		if prev.Out(i) != cur.In(j) {
+		isValid := isValidNextFunc(types[i-1], types[i])
+		if !isValid {
 			return ErrInvalidSeqFuncs
 		}
-		i++
-		j++
 	}
 
 	return nil

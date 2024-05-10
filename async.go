@@ -215,3 +215,38 @@ func makeNonVariadicFuncIn(
 
 	return in
 }
+
+// isValidNextFunc checks the current function's return values and the next function's parameters,
+// and returns a boolean value to indicates whether the functions are match or not
+func isValidNextFunc(cur, next reflect.Type) bool {
+	isTakeContext := isFuncTakesContext(next)
+	numOut := cur.NumOut()
+	numIn := next.NumIn()
+
+	if isTakeContext {
+		numIn--
+	}
+	if numOut < numIn {
+		return false
+	}
+
+	i := 0
+	j := 0
+
+	if isTakeContext {
+		if numOut > 0 && isContextType(cur.Out(0)) {
+			i++
+		}
+		numIn++
+		j++
+	}
+	for i < numOut && j < numIn {
+		if cur.Out(i) != next.In(j) {
+			return false
+		}
+		i++
+		j++
+	}
+
+	return true
+}
