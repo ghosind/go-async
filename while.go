@@ -70,7 +70,7 @@ func validateWhileFuncs(testFn, fn AsyncFn) {
 	}
 
 	numIn := tft.NumIn()
-	isTakeContext := isFuncTakesContext(tft)
+	isTakeContext, _ := isFuncTakesContexts(tft)
 	if isTakeContext {
 		numIn--
 	}

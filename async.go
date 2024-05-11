@@ -65,15 +65,25 @@ func isContextType(ty reflect.Type) bool {
 		ty.Implements(contextType) && contextType.Implements(ty)
 }
 
-// isFuncTakesContext checks the function takes a Context as the first argument.
-func isFuncTakesContext(fn reflect.Type) bool {
+// isFuncTakesContexts checks the function takes Contexts as the arguments.
+func isFuncTakesContexts(fn reflect.Type) (bool, int) {
 	if fn.NumIn() <= 0 {
-		return false
+		return false, 0
 	}
 
-	in := fn.In(0)
+	hasContext := false
+	contextNum := 0
+	for i := 0; i < fn.NumIn(); i++ {
+		ok := isContextType(fn.In(i))
+		if ok {
+			hasContext = true
+			contextNum++
+		} else {
+			break
+		}
+	}
 
-	return isContextType(in)
+	return hasContext, contextNum
 }
 
 // isFuncReturnsError checks the last return value of the function is an error if the function
@@ -143,7 +153,7 @@ func invokeAsyncFn(fn AsyncFn, ctx context.Context, params []any) ([]any, error)
 
 // makeFuncIn makes a reflected values list of the parameters to call the function.
 func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Value {
-	isTakeContext := isFuncTakesContext(ft)
+	isTakeContext, _ := isFuncTakesContexts(ft)
 	isContextParam := isTakeContext && isFirstParamContext(params, ft.NumIn())
 
 	if !ft.IsVariadic() {
@@ -219,7 +229,7 @@ func makeNonVariadicFuncIn(
 // isValidNextFunc checks the current function's return values and the next function's parameters,
 // and returns a boolean value to indicates whether the functions are match or not
 func isValidNextFunc(cur, next reflect.Type) bool {
-	isTakeContext := isFuncTakesContext(next)
+	isTakeContext, _ := isFuncTakesContexts(next)
 	numOut := cur.NumOut()
 	numIn := next.NumIn()
 

@@ -39,14 +39,36 @@ func TestValidateAsyncFuncs(t *testing.T) {
 	}, ErrNotFunction)
 }
 
-func TestIsFuncTakesContext(t *testing.T) {
+func TestIsFuncTakesContexts(t *testing.T) {
 	a := assert.New(t)
 
-	a.TrueNow(isFuncTakesContext(reflect.TypeOf(func(context.Context) {})))
-	a.TrueNow(isFuncTakesContext(reflect.TypeOf(func(context.Context, int) {})))
-	a.NotTrueNow(isFuncTakesContext(reflect.TypeOf(func() {})))
-	a.NotTrueNow(isFuncTakesContext(reflect.TypeOf(func(int) {})))
-	a.NotTrueNow(isFuncTakesContext(reflect.TypeOf(func(int, context.Context) {})))
+	isTakeContext, contextNum := isFuncTakesContexts(reflect.TypeOf(func(context.Context) {}))
+	a.TrueNow(isTakeContext)
+	a.EqualNow(contextNum, 1)
+
+	isTakeContext, contextNum = isFuncTakesContexts(reflect.TypeOf(func(context.Context, int) {}))
+	a.TrueNow(isTakeContext)
+	a.EqualNow(contextNum, 1)
+
+	isTakeContext, contextNum = isFuncTakesContexts(reflect.TypeOf(func(context.Context, context.Context, int) {}))
+	a.TrueNow(isTakeContext)
+	a.EqualNow(contextNum, 2)
+
+	isTakeContext, contextNum = isFuncTakesContexts(reflect.TypeOf(func(context.Context, int, context.Context) {}))
+	a.TrueNow(isTakeContext)
+	a.EqualNow(contextNum, 1)
+
+	isTakeContext, contextNum = isFuncTakesContexts(reflect.TypeOf(func() {}))
+	a.NotTrueNow(isTakeContext)
+	a.EqualNow(contextNum, 0)
+
+	isTakeContext, contextNum = isFuncTakesContexts(reflect.TypeOf(func(int) {}))
+	a.NotTrueNow(isTakeContext)
+	a.EqualNow(contextNum, 0)
+
+	isTakeContext, contextNum = isFuncTakesContexts(reflect.TypeOf(func(int, context.Context) {}))
+	a.NotTrueNow(isTakeContext)
+	a.EqualNow(contextNum, 0)
 }
 
 func TestIsFuncReturnsError(t *testing.T) {

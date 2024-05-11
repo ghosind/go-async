@@ -71,7 +71,8 @@ func validateUntilFuncs(testFn, fn AsyncFn) (isNoParam bool) {
 	}
 
 	numIn := tft.NumIn()
-	if numIn == 0 || (numIn == 1 && isFuncTakesContext(tft)) {
+	_, contextNum := isFuncTakesContexts(tft)
+	if numIn == contextNum {
 		return true
 	}
 
