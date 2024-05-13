@@ -57,51 +57,16 @@ func TimesSeriesWithContext(ctx context.Context, n int, fn AsyncFn) ([][]any, er
 
 // times executes the function n times withe the specified concurrency.
 func times(parent context.Context, n, concurrency int, fn AsyncFn) ([][]any, error) {
-	// the number of concurrency should be 0 (no limitation) or greater than 0.
-	if concurrency < 0 {
-		panic(ErrInvalidConcurrency)
-	}
-	validateAsyncFuncs(fn)
+	paralleler := new(Paralleler).
+		WithConcurrency(concurrency).
+		WithContext(parent)
 
-	parent = getContext(parent)
-	ctx, canFunc := context.WithCancel(parent)
-	defer canFunc()
-
-	out := make([][]any, n)
-
-	ch := make(chan executeResult, n)
-	var conch chan empty
-
-	if concurrency > 0 {
-		conch = make(chan empty, concurrency)
+	tasks := make([]AsyncFn, 0, n)
+	for i := 0; i < n; i++ {
+		tasks = append(tasks, fn)
 	}
 
-	go func() {
-		for i := 0; i < n; i++ {
-			if conch != nil {
-				conch <- empty{}
-			}
+	paralleler.Add(tasks...)
 
-			go runTaskInParallel(ctx, i, fn, conch, ch)
-		}
-	}()
-
-	finished := 0
-	for finished < n {
-		select {
-		case <-parent.Done():
-			return out, ErrContextCanceled
-		case ret := <-ch:
-			out[ret.Index] = ret.Out
-			if ret.Error != nil {
-				return out, &executionError{
-					index: ret.Index,
-					err:   ret.Error,
-				}
-			}
-			finished++
-		}
-	}
-
-	return out, nil
+	return paralleler.Run()
 }

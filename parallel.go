@@ -48,86 +48,13 @@ func ParallelWithContext(
 
 // parallel runs the functions asynchronously with the specified concurrency.
 func parallel(parent context.Context, concurrency int, funcs ...AsyncFn) ([][]any, error) {
-	// the number of concurrency should be 0 (no limitation) or greater than 0.
-	if concurrency < 0 {
-		panic(ErrInvalidConcurrency)
-	}
-	validateAsyncFuncs(funcs...)
+	paralleler := new(Paralleler).
+		WithContext(parent).
+		WithConcurrency(concurrency)
 
-	out := make([][]any, len(funcs))
-	if len(funcs) == 0 {
-		return out, nil
-	}
+	paralleler.Add(funcs...)
 
-	parent = getContext(parent)
-	ctx, canFunc := context.WithCancel(parent)
-	defer canFunc()
-
-	ch := make(chan executeResult, len(funcs)) // channel for result
-	var conch chan empty                       // channel for concurrency limit
-
-	// no concurrency limitation if the value of the number is 0
-	if concurrency > 0 {
-		conch = make(chan empty, concurrency)
-	}
-
-	go func() {
-		for i := 0; i < len(funcs); i++ {
-			if conch != nil {
-				conch <- empty{}
-			}
-
-			go runTaskInParallel(ctx, i, funcs[i], conch, ch)
-		}
-	}()
-
-	finished := 0
-	for finished < len(funcs) {
-		select {
-		case <-parent.Done():
-			return out, ErrContextCanceled
-		case ret := <-ch:
-			out[ret.Index] = ret.Out
-			if ret.Error != nil {
-				return out, &executionError{
-					index: ret.Index,
-					err:   ret.Error,
-				}
-			}
-			finished++
-		}
-	}
-
-	return out, nil
-}
-
-// runTaskInParallel runs the specified function for Parallel / ParallelWithContext.
-func runTaskInParallel(
-	ctx context.Context,
-	n int,
-	fn AsyncFn,
-	conch chan empty,
-	ch chan executeResult,
-) {
-	childCtx, childCanFunc := context.WithCancel(ctx)
-	defer childCanFunc()
-
-	ret, err := invokeAsyncFn(fn, childCtx, nil)
-
-	if conch != nil {
-		<-conch
-	}
-
-	select {
-	case <-ctx.Done():
-		return
-	default:
-		ch <- executeResult{
-			Index: n,
-			Error: err,
-			Out:   ret,
-		}
-	}
+	return paralleler.Run()
 }
 
 // ParallelCompleted runs the functions asynchronously with the specified concurrency limitation.
