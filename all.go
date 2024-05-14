@@ -50,61 +50,12 @@ func AllWithContext(ctx context.Context, funcs ...AsyncFn) ([][]any, error) {
 // all executes the functions asynchronously until all functions have been finished, or the context
 // is done (canceled or timeout).
 func all(parent context.Context, funcs ...AsyncFn) ([][]any, error) {
-	if len(funcs) == 0 {
-		return nil, nil
-	}
-	validateAsyncFuncs(funcs...)
+	paralleler := new(Paralleler).
+		WithContext(parent)
 
-	parent = getContext(parent)
+	paralleler.Add(funcs...)
 
-	ctx, canFunc := context.WithCancel(parent)
-	defer canFunc()
-
-	ch := make(chan executeResult, len(funcs))
-	defer close(ch)
-
-	for i := 0; i < len(funcs); i++ {
-		go runTaskInAll(ctx, i, funcs[i], ch)
-	}
-
-	finished := 0
-	out := make([][]any, len(funcs))
-	for finished < len(funcs) {
-		select {
-		case <-parent.Done():
-			return out, ErrContextCanceled
-		case ret := <-ch:
-			out[ret.Index] = ret.Out
-			if ret.Error != nil {
-				return out, &executionError{
-					index: ret.Index,
-					err:   ret.Error,
-				}
-			}
-			finished++
-		}
-	}
-
-	return out, nil
-}
-
-// runTaskInAll runs the specified function for All / AllWithContext.
-func runTaskInAll(ctx context.Context, n int, fn AsyncFn, ch chan<- executeResult) {
-	childCtx, childCanFunc := context.WithCancel(ctx)
-	defer childCanFunc()
-
-	ret, err := invokeAsyncFn(fn, childCtx, nil)
-
-	select {
-	case <-ctx.Done():
-		return
-	default:
-		ch <- executeResult{
-			Error: err,
-			Index: n,
-			Out:   ret,
-		}
-	}
+	return paralleler.Run()
 }
 
 // AllCompleted executes the functions asynchronously until all functions have been finished. It

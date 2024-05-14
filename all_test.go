@@ -16,7 +16,7 @@ func TestAllWithoutFuncs(t *testing.T) {
 
 	out, err := async.All()
 	a.NilNow(err)
-	a.NilNow(out)
+	a.EqualNow(out, [][]any{})
 }
 
 func TestAllSuccess(t *testing.T) {
