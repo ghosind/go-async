@@ -5,6 +5,13 @@ import (
 	"sync"
 )
 
+// builtinPool is the Parallelers pool for built-in functions.
+var builtinPool sync.Pool = sync.Pool{
+	New: func() any {
+		return new(Paralleler)
+	},
+}
+
 // Paralleler is a tool to run the tasks with the specific concurrency, default no concurrency
 // limitation.
 type Paralleler struct {

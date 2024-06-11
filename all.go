@@ -50,10 +50,14 @@ func AllWithContext(ctx context.Context, funcs ...AsyncFn) ([][]any, error) {
 // all executes the functions asynchronously until all functions have been finished, or the context
 // is done (canceled or timeout).
 func all(parent context.Context, funcs ...AsyncFn) ([][]any, error) {
-	paralleler := new(Paralleler).
-		WithContext(parent)
+	paralleler := builtinPool.Get().(*Paralleler)
+	defer func() {
+		builtinPool.Put(paralleler)
+	}()
 
-	paralleler.Add(funcs...)
+	paralleler.
+		WithContext(parent).
+		Add(funcs...)
 
 	return paralleler.Run()
 }

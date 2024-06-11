@@ -57,7 +57,12 @@ func TimesSeriesWithContext(ctx context.Context, n int, fn AsyncFn) ([][]any, er
 
 // times executes the function n times withe the specified concurrency.
 func times(parent context.Context, n, concurrency int, fn AsyncFn) ([][]any, error) {
-	paralleler := new(Paralleler).
+	paralleler := builtinPool.Get().(*Paralleler)
+	defer func() {
+		builtinPool.Put(paralleler)
+	}()
+
+	paralleler.
 		WithConcurrency(concurrency).
 		WithContext(parent)
 

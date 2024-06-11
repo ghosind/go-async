@@ -48,11 +48,15 @@ func ParallelWithContext(
 
 // parallel runs the functions asynchronously with the specified concurrency.
 func parallel(parent context.Context, concurrency int, funcs ...AsyncFn) ([][]any, error) {
-	paralleler := new(Paralleler).
-		WithContext(parent).
-		WithConcurrency(concurrency)
+	paralleler := builtinPool.Get().(*Paralleler)
+	defer func() {
+		builtinPool.Put(paralleler)
+	}()
 
-	paralleler.Add(funcs...)
+	paralleler.
+		WithContext(parent).
+		WithConcurrency(concurrency).
+		Add(funcs...)
 
 	return paralleler.Run()
 }
