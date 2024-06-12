@@ -2,6 +2,7 @@ package async_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync/atomic"
 	"testing"
@@ -74,7 +75,7 @@ func TestParallelerClear(t *testing.T) {
 	}
 
 	_, err := p.Run()
-	a.Nil(err)
+	a.NilNow(err)
 	a.EqualNow(cnt.Load(), 3)
 }
 
@@ -123,6 +124,29 @@ func TestParallelerWithContext(t *testing.T) {
 	_, err := p.Run()
 	a.EqualNow(err, async.ErrContextCanceled)
 	a.EqualNow(cnt.Load(), 2)
+}
+
+func TestParallelerRunCompleted(t *testing.T) {
+	a := assert.New(t)
+	cnt := atomic.Int32{}
+	expectedErr := errors.New("n = 2")
+
+	p := new(async.Paralleler).WithConcurrency(2)
+	for i := 0; i < 5; i++ {
+		n := i
+		p.Add(func() error {
+			cnt.Add(1)
+			if n == 2 {
+				return expectedErr
+			}
+			return nil
+		})
+	}
+
+	out, err := p.RunCompleted()
+	a.NotNilNow(err)
+	a.EqualNow(out, [][]any{{nil}, {nil}, {expectedErr}, {nil}, {nil}})
+	a.EqualNow(cnt.Load(), 5)
 }
 
 func ExampleParalleler() {

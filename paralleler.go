@@ -3,6 +3,7 @@ package async
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 )
 
 // builtinPool is the Parallelers pool for built-in functions.
@@ -76,7 +77,7 @@ func (p *Paralleler) Run() ([][]any, error) {
 
 	ch := make(chan executeResult, len(tasks))
 
-	go p.runTasks(ctx, ch, tasks)
+	go p.runTasks(ctx, ch, tasks, true)
 
 	finished := 0
 	for finished < len(tasks) {
@@ -96,6 +97,41 @@ func (p *Paralleler) Run() ([][]any, error) {
 	}
 
 	return out, nil
+}
+
+// RunCompleted runs the tasks in the paralleler's pending list until all functions are finished,
+// it'll clear the pending list and return the results of the tasks.
+func (p *Paralleler) RunCompleted() ([][]any, error) {
+	tasks := p.getTasks()
+	out := make([][]any, len(tasks))
+	if len(tasks) == 0 {
+		return out, nil
+	}
+
+	errs := make([]error, len(tasks))
+	errNum := atomic.Int32{}
+	parent := getContext(p.ctx)
+	ctx, canFunc := context.WithCancel(parent)
+	defer canFunc()
+
+	ch := make(chan executeResult, len(tasks))
+
+	go p.runTasks(ctx, ch, tasks, false)
+
+	for finished := 0; finished < len(tasks); finished++ {
+		ret := <-ch
+		out[ret.Index] = ret.Out
+		if ret.Error != nil {
+			errs[ret.Index] = ret.Error
+			errNum.Add(1)
+		}
+	}
+
+	if errNum.Load() == 0 {
+		return out, nil
+	}
+
+	return out, convertErrorListToExecutionErrors(errs, int(errNum.Load()))
 }
 
 // getConcurrencyChan creates and returns a concurrency controlling channel by the specific number
@@ -124,7 +160,12 @@ func (p *Paralleler) getTasks() []AsyncFn {
 }
 
 // runTasks runs the tasks with the concurrency limitation.
-func (p *Paralleler) runTasks(ctx context.Context, resCh chan executeResult, tasks []AsyncFn) {
+func (p *Paralleler) runTasks(
+	ctx context.Context,
+	resCh chan executeResult,
+	tasks []AsyncFn,
+	exitWhenDone bool,
+) {
 	conch := p.getConcurrencyChan()
 
 	for i := 0; i < len(tasks); i++ {
@@ -132,7 +173,7 @@ func (p *Paralleler) runTasks(ctx context.Context, resCh chan executeResult, tas
 			conch <- empty{}
 		}
 
-		go p.runTask(ctx, i, tasks[i], conch, resCh)
+		go p.runTask(ctx, i, tasks[i], conch, resCh, exitWhenDone)
 	}
 }
 
@@ -143,6 +184,7 @@ func (p *Paralleler) runTask(
 	fn AsyncFn,
 	conch chan empty,
 	ch chan executeResult,
+	exitWhenDone bool,
 ) {
 	childCtx, childCanFunc := context.WithCancel(ctx)
 	defer childCanFunc()
@@ -153,14 +195,22 @@ func (p *Paralleler) runTask(
 		<-conch
 	}
 
-	select {
-	case <-ctx.Done():
-		return
-	default:
+	if !exitWhenDone {
 		ch <- executeResult{
 			Index: n,
 			Error: err,
 			Out:   ret,
+		}
+	} else {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			ch <- executeResult{
+				Index: n,
+				Error: err,
+				Out:   ret,
+			}
 		}
 	}
 }
