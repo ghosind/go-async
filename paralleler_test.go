@@ -51,6 +51,7 @@ func TestParallelerRunWithFailure(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		n := i
 		p.Add(func() error {
+			time.Sleep(10 * time.Millisecond)
 			cnt.Add(1)
 			if n == 2 {
 				return expectedErr
