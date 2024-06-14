@@ -2,8 +2,6 @@ package async
 
 import (
 	"context"
-	"sync"
-	"sync/atomic"
 )
 
 // Parallel runs the functions asynchronously with the specified concurrency limitation. It will
@@ -95,62 +93,15 @@ func parallelCompleted(
 	concurrency int,
 	funcs ...AsyncFn,
 ) ([][]any, error) {
-	// the number of concurrency should be 0 (no limitation) or greater than 0.
-	if concurrency < 0 {
-		panic(ErrInvalidConcurrency)
-	}
-	validateAsyncFuncs(funcs...)
+	paralleler := builtinPool.Get().(*Paralleler)
+	defer func() {
+		builtinPool.Put(paralleler)
+	}()
 
-	out := make([][]any, len(funcs))
+	paralleler.
+		WithContext(parent).
+		WithConcurrency(concurrency).
+		Add(funcs...)
 
-	if len(funcs) == 0 {
-		return out, nil
-	}
-
-	ctx := getContext(parent)
-	errs := make([]error, len(funcs))
-	errNum := atomic.Int32{}
-
-	wg := sync.WaitGroup{}
-	wg.Add(len(funcs))
-
-	var conch chan empty // channel for concurrency limit
-	// no concurrency limitation if the value of the number is 0
-	if concurrency > 0 {
-		conch = make(chan empty, concurrency)
-	}
-
-	for i := 0; i < len(funcs); i++ {
-		if conch != nil {
-			conch <- empty{}
-		}
-
-		go func(n int) {
-			defer wg.Done()
-
-			fn := funcs[n]
-			childCtx, childCanFunc := context.WithCancel(ctx)
-			defer childCanFunc()
-
-			ret, err := invokeAsyncFn(fn, childCtx, nil)
-			if err != nil {
-				errs[n] = err
-				errNum.Add(1)
-			}
-			out[n] = ret
-
-			if conch != nil {
-				<-conch
-			}
-		}(i)
-	}
-
-	wg.Wait()
-	if errNum.Load() == 0 {
-		return out, nil
-	}
-
-	err := convertErrorListToExecutionErrors(errs, int(errNum.Load()))
-
-	return out, err
+	return paralleler.RunCompleted()
 }

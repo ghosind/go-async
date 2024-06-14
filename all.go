@@ -2,8 +2,6 @@ package async
 
 import (
 	"context"
-	"sync"
-	"sync/atomic"
 )
 
 // All executes the functions asynchronously until all functions have been finished. If some
@@ -98,44 +96,14 @@ func allCompleted(
 	parent context.Context,
 	funcs ...AsyncFn,
 ) ([][]any, error) {
-	validateAsyncFuncs(funcs...)
+	paralleler := builtinPool.Get().(*Paralleler)
+	defer func() {
+		builtinPool.Put(paralleler)
+	}()
 
-	out := make([][]any, len(funcs))
-	if len(funcs) == 0 {
-		return out, nil
-	}
+	paralleler.
+		WithContext(parent).
+		Add(funcs...)
 
-	parent = getContext(parent)
-
-	errs := make([]error, len(funcs))
-	errNum := atomic.Int32{}
-
-	wg := sync.WaitGroup{}
-	wg.Add(len(funcs))
-
-	for i := 0; i < len(funcs); i++ {
-		go func(n int) {
-			fn := funcs[n]
-
-			childCtx, childCanFunc := context.WithCancel(parent)
-			defer childCanFunc()
-			defer wg.Done()
-
-			ret, err := invokeAsyncFn(fn, childCtx, nil)
-			if err != nil {
-				errNum.Add(1)
-				errs[n] = err
-			}
-			out[n] = ret
-		}(i)
-	}
-
-	wg.Wait()
-	if errNum.Load() == 0 {
-		return out, nil
-	}
-
-	err := convertErrorListToExecutionErrors(errs, int(errNum.Load()))
-
-	return out, err
+	return paralleler.RunCompleted()
 }
