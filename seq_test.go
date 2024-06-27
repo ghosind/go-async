@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/ghosind/go-assert"
 	"github.com/ghosind/go-async"
@@ -97,4 +99,98 @@ func ExampleSeq() {
 	// Output:
 	// [2]
 	// <nil>
+}
+
+func TestSeqGroups(t *testing.T) {
+	a := assert.New(t)
+	cnts := make([]atomic.Int32, 3)
+	groups := make([][]async.AsyncFn, 0, 3)
+	expectedCnts := []int{2, 3, 4}
+
+	for i := 0; i < 3; i++ {
+		tasks := make([]async.AsyncFn, 0)
+		idx := i
+		for j := 0; j < i+2; j++ {
+			tasks = append(tasks, func() {
+				cnts[idx].Add(1)
+			})
+		}
+		groups = append(groups, tasks)
+	}
+
+	err := async.SeqGroups(groups...)
+	a.NilNow(err)
+	for i := 0; i < 3; i++ {
+		a.EqualNow(cnts[i].Load(), expectedCnts[i])
+	}
+}
+
+func TestSeqGroupsWithoutTasks(t *testing.T) {
+	a := assert.New(t)
+
+	err := async.SeqGroups()
+	a.NilNow(err)
+}
+
+func TestSeqGroupsWithFailure(t *testing.T) {
+	a := assert.New(t)
+	cnts := make([]atomic.Int32, 3)
+	groups := make([][]async.AsyncFn, 0, 3)
+	expectedErr := errors.New("expected error")
+	expectedCnts := []int{2, 0, 0}
+
+	for i := 0; i < 3; i++ {
+		tasks := make([]async.AsyncFn, 0)
+		idx := i
+		for j := 0; j < i+2; j++ {
+			tasks = append(tasks, func() error {
+				v := cnts[idx].Add(1)
+
+				if idx == 1 && v == 2 {
+					return expectedErr
+				}
+
+				return nil
+			})
+		}
+		groups = append(groups, tasks)
+	}
+
+	err := async.SeqGroups(groups...)
+	a.NotNilNow(err)
+	a.ContainsStringNow(err.Error(), expectedErr.Error())
+
+	for i := 0; i < 3; i++ {
+		if i == 1 {
+			continue
+		}
+		a.EqualNow(cnts[i].Load(), expectedCnts[i])
+	}
+}
+
+func TestSeqGroupsWithContext(t *testing.T) {
+	a := assert.New(t)
+	cnts := make([]atomic.Int32, 3)
+	groups := make([][]async.AsyncFn, 0, 3)
+	expectedCnts := []int{2, 3, 4}
+
+	for i := 0; i < 3; i++ {
+		tasks := make([]async.AsyncFn, 0)
+		idx := i
+		for j := 0; j < i+2; j++ {
+			tasks = append(tasks, func() {
+				cnts[idx].Add(1)
+			})
+		}
+		groups = append(groups, tasks)
+	}
+
+	ctx, canFunc := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer canFunc()
+
+	err := async.SeqGroupsWithContext(ctx, groups...)
+	a.NilNow(err)
+	for i := 0; i < 3; i++ {
+		a.EqualNow(cnts[i].Load(), expectedCnts[i])
+	}
 }

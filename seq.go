@@ -74,3 +74,35 @@ func validateSeqFuncs(funcs ...AsyncFn) error {
 
 	return nil
 }
+
+// SeGroups runs the functions group in order, and it will be terminated if any function returns error.
+func SeqGroups(groups ...[]AsyncFn) error {
+	return seqGroups(context.Background(), groups...)
+}
+
+func SeqGroupsWithContext(ctx context.Context, groups ...[]AsyncFn) error {
+	return seqGroups(ctx, groups...)
+}
+
+func seqGroups(ctx context.Context, groups ...[]AsyncFn) error {
+	if len(groups) == 0 {
+		return nil
+	}
+
+	tasks := make([]AsyncFn, 0, len(groups))
+	for _, group := range groups {
+		validateAsyncFuncs(group...)
+		task := func(funcs ...AsyncFn) AsyncFn {
+			return func(ctx context.Context) error {
+				_, err := all(ctx, funcs...)
+				return err
+			}
+		}(group...)
+		tasks = append(tasks, task)
+	}
+
+	ctx = getContext(ctx)
+
+	_, err := seq(ctx, tasks...)
+	return err
+}
