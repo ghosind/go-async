@@ -125,6 +125,32 @@ func TestSeqGroups(t *testing.T) {
 	}
 }
 
+func TestSeqGroupsWithEmptyGroup(t *testing.T) {
+	a := assert.New(t)
+	cnts := make([]atomic.Int32, 4)
+	groups := make([][]async.AsyncFn, 0, 3)
+	expectedCnts := []int{2, 0, 4, 5}
+
+	for i := 0; i < 4; i++ {
+		tasks := make([]async.AsyncFn, 0)
+		if i != 1 {
+			idx := i
+			for j := 0; j < i+2; j++ {
+				tasks = append(tasks, func() {
+					cnts[idx].Add(1)
+				})
+			}
+		}
+		groups = append(groups, tasks)
+	}
+
+	err := async.SeqGroups(groups...)
+	a.NilNow(err)
+	for i := 0; i < 3; i++ {
+		a.EqualNow(cnts[i].Load(), expectedCnts[i])
+	}
+}
+
 func TestSeqGroupsWithoutTasks(t *testing.T) {
 	a := assert.New(t)
 

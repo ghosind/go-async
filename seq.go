@@ -91,7 +91,12 @@ func seqGroups(ctx context.Context, groups ...[]AsyncFn) error {
 
 	tasks := make([]AsyncFn, 0, len(groups))
 	for _, group := range groups {
+		if len(group) == 0 {
+			continue
+		}
+
 		validateAsyncFuncs(group...)
+
 		task := func(funcs ...AsyncFn) AsyncFn {
 			return func(ctx context.Context) error {
 				_, err := all(ctx, funcs...)
