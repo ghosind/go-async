@@ -129,7 +129,7 @@ func TestSeqGroupsWithEmptyGroup(t *testing.T) {
 	a := assert.New(t)
 	cnts := make([]atomic.Int32, 4)
 	groups := make([][]async.AsyncFn, 0, 3)
-	expectedCnts := []int{2, 0, 4, 5}
+	expectedCnts := []int32{2, 0, 4, 5}
 
 	for i := 0; i < 4; i++ {
 		tasks := make([]async.AsyncFn, 0)
@@ -137,7 +137,9 @@ func TestSeqGroupsWithEmptyGroup(t *testing.T) {
 			idx := i
 			for j := 0; j < i+2; j++ {
 				tasks = append(tasks, func() {
-					cnts[idx].Add(1)
+					if idx == 0 || cnts[idx-1].Load() == expectedCnts[idx-1] {
+						cnts[idx].Add(1)
+					}
 				})
 			}
 		}
@@ -219,4 +221,47 @@ func TestSeqGroupsWithContext(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		a.EqualNow(cnts[i].Load(), expectedCnts[i])
 	}
+}
+
+func ExampleSeqGroups() {
+	flags := [][]bool{{false, false}, {false}, {true, true}}
+
+	err := async.SeqGroups([]async.AsyncFn{
+		func() error {
+			flags[0][0] = true
+			return nil
+		},
+		func() error {
+			flags[0][1] = true
+			return nil
+		},
+	}, []async.AsyncFn{
+		func() error {
+			if !flags[0][0] || !flags[0][1] {
+				return errors.New("unexpected error")
+			}
+			flags[1][0] = true
+			return nil
+		},
+	}, []async.AsyncFn{
+		func() error {
+			if !flags[1][0] {
+				return errors.New("unexpected error")
+			}
+			flags[2][0] = true
+			return nil
+		},
+		func() error {
+			if !flags[1][0] {
+				return errors.New("unexpected error")
+			}
+			flags[2][1] = true
+			return nil
+		},
+	})
+	fmt.Println(err)
+	fmt.Println(flags)
+	// Output:
+	// <nil>
+	// [[true true] [true] [true true]]
 }
