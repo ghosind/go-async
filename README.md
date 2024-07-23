@@ -52,7 +52,7 @@ The most of utility functions of this library accept any type of function to run
 
 For all functions, you can use the `XXXWithContext` function (like `AllWithContext`, `RaceWithContext`, ...) to set the context by yourself.
 
-## Available Utility Functions
+## Available Functions
 
 - [`All`](https://pkg.go.dev/github.com/ghosind/go-async#All)
 - [`AllCompleted`](https://pkg.go.dev/github.com/ghosind/go-async#AllCompleted)
@@ -62,6 +62,7 @@ For all functions, you can use the `XXXWithContext` function (like `AllWithConte
 - [`Race`](https://pkg.go.dev/github.com/ghosind/go-async#Race)
 - [`Retry`](https://pkg.go.dev/github.com/ghosind/go-async#Retry)
 - [`Seq`](https://pkg.go.dev/github.com/ghosind/go-async#Seq)
+- [`SeqGroups`](https://pkg.go.dev/github.com/ghosind/go-async#SeqGroups)
 - [`Series`](https://pkg.go.dev/github.com/ghosind/go-async#Series)
 - [`Times`](https://pkg.go.dev/github.com/ghosind/go-async#Times)
 - [`TimesLimit`](https://pkg.go.dev/github.com/ghosind/go-async#TimesLimit)

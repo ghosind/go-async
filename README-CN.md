@@ -60,6 +60,7 @@ out, err := async.All(func (ctx context.Context) (int, error) {
 - [`Race`](https://pkg.go.dev/github.com/ghosind/go-async#Race)
 - [`Retry`](https://pkg.go.dev/github.com/ghosind/go-async#Retry)
 - [`Seq`](https://pkg.go.dev/github.com/ghosind/go-async#Seq)
+- [`SeqGroups`](https://pkg.go.dev/github.com/ghosind/go-async#SeqGroups)
 - [`Series`](https://pkg.go.dev/github.com/ghosind/go-async#Series)
 - [`Times`](https://pkg.go.dev/github.com/ghosind/go-async#Times)
 - [`TimesLimit`](https://pkg.go.dev/github.com/ghosind/go-async#TimesLimit)
