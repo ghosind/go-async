@@ -12,7 +12,7 @@ import (
 // limitation if the number is 0.
 //
 //	// Run 2 functions asynchronously at the time.
-//	out, err := Parallel(2, func(ctx context.Context) (int, error) {
+//	out, err := async.Parallel(2, func(ctx context.Context) (int, error) {
 //	  // Do something
 //	  return 1, nil
 //	}, func(ctx context.Context) (string, error) {

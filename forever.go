@@ -13,7 +13,7 @@ type ForeverFn func(ctx context.Context, next func(context.Context)) error
 // You can use the context and call the next function to pass values to the next invocation. The
 // next function can be invoked one time only, and it will have no effect if it is invoked again.
 //
-//	err := Forever(func(ctx context.Context, next func(context.Context)) error {
+//	err := async.Forever(func(ctx context.Context, next func(context.Context)) error {
 //	  v := ctx.Value("key")
 //	  if v != nil {
 //	    vi := v.(int)

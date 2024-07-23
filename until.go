@@ -15,7 +15,7 @@ import (
 // values' types of the execution function.
 //
 //	c := 0
-//	Until(func() bool {
+//	async.Until(func() bool {
 //	  return c == 5
 //	}, func() {
 //	  c++

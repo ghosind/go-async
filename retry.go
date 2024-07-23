@@ -29,12 +29,12 @@ type RetryOptions struct {
 // the successful task. If all attempts fail, it will return the result and the error of the final
 // attempt.
 //
-//	Retry(func() error {
+//	async.Retry(func() error {
 //	  // Do something
 //	  return err
 //	}) // Run the function 5 times without interval time or it succeed
 //
-//	Retry(func() error {
+//	async.Retry(func() error {
 //	  // Do something
 //	  return err
 //	}, RetryOptions{

@@ -9,7 +9,7 @@ import (
 // of the finished function (including panic), and it will not send a cancel signal to other
 // functions.
 //
-//	out, index, err := Race(func(ctx context.Context) (int, error) {
+//	out, index, err := async.Race(func(ctx context.Context) (int, error) {
 //	  request.Get("https://example.com")
 //	  return 0, nil
 //	}, func(ctx context.Context) (string, error) {

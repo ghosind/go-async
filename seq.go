@@ -9,7 +9,7 @@ import (
 // function. It returns the result of the last function, or it terminates and returns the error
 // that panics or returns by the function in the list.
 //
-//	out, err :=Seq(func () int {
+//	out, err := async.Seq(func () int {
 //		return 1
 //	}, func (n int) int {
 //		return n + 1
@@ -20,9 +20,10 @@ func Seq(funcs ...AsyncFn) ([]any, error) {
 	return seq(context.Background(), funcs...)
 }
 
-// Seq runs the functions in order with the specified context, and each function consumes the
-// returns value of the previous function. It returns the result of the last function, or it
-// terminates and returns the error that panics or returns by the function in the list.
+// SeqWithContext runs the functions in order with the specified context, and each function
+// consumes the returns value of the previous function. It returns the result of the last
+// function, or it terminates and returns the error that panics or returns by the function in the
+// list.
 func SeqWithContext(ctx context.Context, funcs ...AsyncFn) ([]any, error) {
 	return seq(ctx, funcs...)
 }
@@ -75,15 +76,27 @@ func validateSeqFuncs(funcs ...AsyncFn) error {
 	return nil
 }
 
-// SeGroups runs the functions group in order, and it will be terminated if any function returns error.
+// SeGroups runs the functions group in order, and it will be terminated if any function returns
+// error.
+//
+//	err := async.SeqGroups([]async.AsyncFn{func () {
+//			// fn 1.a
+//		}, func () {
+//			// fn 1.b
+//		}}, []async.AsyncFn{func() {
+//			// fn 2
+//		}})
 func SeqGroups(groups ...[]AsyncFn) error {
 	return seqGroups(context.Background(), groups...)
 }
 
+// SeqGroupsWithContext runs the functions group in order with the specified context, and it will
+// be terminated if any function returns error.
 func SeqGroupsWithContext(ctx context.Context, groups ...[]AsyncFn) error {
 	return seqGroups(ctx, groups...)
 }
 
+// seqGroups runs the functions group in order.
 func seqGroups(ctx context.Context, groups ...[]AsyncFn) error {
 	if len(groups) == 0 {
 		return nil

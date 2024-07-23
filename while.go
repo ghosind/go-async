@@ -12,7 +12,7 @@ import (
 // - It should have no parameters or accept a context only.
 //
 //	c := 0
-//	While(func() bool {
+//	async.While(func() bool {
 //	  return c == 5
 //	}, func() {
 //	  c++
