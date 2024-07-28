@@ -59,6 +59,11 @@ func (e *executionError) Error() string {
 	return fmt.Sprintf("function %d error: %s", e.index, e.err.Error())
 }
 
+// Unwrap returns the inner error.
+func (e *executionError) Unwrap() error {
+	return e.err
+}
+
 // ExecutionErrors is an array of ExecutionError.
 type ExecutionErrors []ExecutionError
 
@@ -74,6 +79,15 @@ func (ee ExecutionErrors) Error() string {
 	}
 
 	return strings.TrimSpace(buf.String())
+}
+
+// Unwrap returns the execution errors.
+func (ee ExecutionErrors) Unwrap() []error {
+	errs := make([]error, 0, len(ee))
+	for _, e := range ee {
+		errs = append(errs, e)
+	}
+	return errs
 }
 
 // convertErrorListToExecutionErrors converts an array of the errors to the ExecutionErrors, it

@@ -62,3 +62,16 @@ func TestConvertErrorListToExecutionErrors(t *testing.T) {
 		`function 0 error: expected error 1
 function 1 error: expected error 2`)
 }
+
+func TestUnwrapExecutionError(t *testing.T) {
+	a := assert.New(t)
+
+	innerErr := errors.New("expected error")
+	err := &executionError{
+		err:   innerErr,
+		index: 0,
+	}
+
+	a.TrueNow(errors.Is(err, innerErr))
+	a.NotTrueNow(errors.Is(err, errors.New("unexpected error")))
+}
