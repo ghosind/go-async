@@ -66,9 +66,11 @@ type ExecutionErrors []ExecutionError
 func (ee ExecutionErrors) Error() string {
 	buf := bytes.NewBufferString("")
 
-	for _, e := range ee {
+	for i, e := range ee {
 		buf.WriteString(e.Error())
-		buf.WriteByte('\n')
+		if i < len(ee)-1 {
+			buf.WriteByte('\n')
+		}
 	}
 
 	return strings.TrimSpace(buf.String())
