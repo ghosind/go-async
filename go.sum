@@ -1,4 +1,6 @@
 github.com/ghosind/go-assert v1.0.3 h1:K77TgGbzCNLPr19MYm2VkYySwOmRixLUZx9Z0BY96O4=
 github.com/ghosind/go-assert v1.0.3/go.mod h1:y1ayrGzScwcWG3TiTjJuFstq9oUHUE1Sk+DzH6CKVHY=
+github.com/ghosind/go-assert v1.1.0 h1:dUOE12U6zDYT1fnNGcoVBqnL7UrrekzOiqOlfomzR8Q=
+github.com/ghosind/go-assert v1.1.0/go.mod h1:y1ayrGzScwcWG3TiTjJuFstq9oUHUE1Sk+DzH6CKVHY=
 github.com/ghosind/go-try v1.0.0 h1:ek3DwNsvFWBe7lm7CwgEbEfyCNgxRPmmRk9bjleh3DM=
 github.com/ghosind/go-try v1.0.0/go.mod h1:M1lQctWgkFsroI1V4AeeEWzS/JX8CINL1qNfTebUNbs=
