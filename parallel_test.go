@@ -88,6 +88,7 @@ func TestParallelWithFailedTask(t *testing.T) {
 	out, err := async.Parallel(2, funcs...)
 	dur := time.Since(start)
 	a.NotNilNow(err)
+	a.IsErrorNow(err, expectedErr)
 	a.EqualNow(err.Error(), "function 2 error: expected error")
 	a.GteNow(dur, 150*time.Millisecond)
 	a.LteNow(dur, 180*time.Millisecond) // allow 30ms deviation
@@ -249,6 +250,7 @@ func TestParallelCompletedWithFailedTask(t *testing.T) {
 
 	out, err := async.ParallelCompleted(0, funcs...)
 	a.NotNilNow(err)
+	a.IsErrorNow(err, expectedErr)
 	a.EqualNow(err.Error(), "function 2 error: expected error")
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, expectedErr}, {3, nil}, {4, nil}})
 }
@@ -307,6 +309,7 @@ func TestParallelCompletedWithTimedOutContext(t *testing.T) {
 
 	out, err := async.ParallelCompletedWithContext(ctx, 2, funcs...)
 	a.NotNilNow(err)
+	a.IsErrorNow(err, timeoutErr)
 	a.EqualNow(err.Error(), `function 2 error: timed out
 function 3 error: timed out
 function 4 error: timed out`)

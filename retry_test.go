@@ -40,43 +40,43 @@ func TestRetryWithFailed(t *testing.T) {
 
 func TestRetryAlwaysFailed(t *testing.T) {
 	a := assert.New(t)
-	expected := errors.New("expected error")
+	expectedErr := errors.New("expected error")
 
 	out, err := async.Retry(func() (int, error) {
-		return 0, expected
+		return 0, expectedErr
 	})
-	a.EqualNow(err, expected)
-	a.EqualNow(out, []any{0, expected})
+	a.IsErrorNow(err, expectedErr)
+	a.EqualNow(out, []any{0, expectedErr})
 }
 
 func TestRetryWithTimes(t *testing.T) {
 	a := assert.New(t)
-	expected := errors.New("expected error")
+	expectedErr := errors.New("expected error")
 	i := 0
 
 	out, err := async.Retry(func() (int, error) {
 		i++
-		return 0, expected
+		return 0, expectedErr
 	}, async.RetryOptions{
 		Times: 3,
 	})
-	a.EqualNow(err, expected)
-	a.EqualNow(out, []any{0, expected})
+	a.IsErrorNow(err, expectedErr)
+	a.EqualNow(out, []any{0, expectedErr})
 	a.EqualNow(i, 3)
 }
 
 func TestRetryWithInterval(t *testing.T) {
 	a := assert.New(t)
-	expected := errors.New("expected error")
+	expectedErr := errors.New("expected error")
 
 	start := time.Now()
 	out, err := async.Retry(func() (int, error) {
-		return 0, expected
+		return 0, expectedErr
 	}, async.RetryOptions{
 		Interval: 100,
 	})
-	a.EqualNow(err, expected)
-	a.EqualNow(out, []any{0, expected})
+	a.IsErrorNow(err, expectedErr)
+	a.EqualNow(out, []any{0, expectedErr})
 
 	dur := time.Since(start)
 	a.GteNow(dur, 400*time.Millisecond)
@@ -85,18 +85,18 @@ func TestRetryWithInterval(t *testing.T) {
 
 func TestRetryWithIntervalFunc(t *testing.T) {
 	a := assert.New(t)
-	expected := errors.New("expected error")
+	expectedErr := errors.New("expected error")
 
 	start := time.Now()
 	out, err := async.Retry(func() (int, error) {
-		return 0, expected
+		return 0, expectedErr
 	}, async.RetryOptions{
 		IntervalFunc: func(n int) int {
 			return n * 50
 		},
 	})
-	a.EqualNow(err, expected)
-	a.EqualNow(out, []any{0, expected})
+	a.IsErrorNow(err, expectedErr)
+	a.EqualNow(out, []any{0, expectedErr})
 
 	dur := time.Since(start)
 	a.GteNow(dur, 500*time.Millisecond)
@@ -105,23 +105,25 @@ func TestRetryWithIntervalFunc(t *testing.T) {
 
 func TestRetryWithErrorFilter(t *testing.T) {
 	a := assert.New(t)
-	expected := errors.New("expected error")
+	expectedErr := errors.New("expected error")
+	unexpectedErr := errors.New("not 3")
 	i := 0
 
 	out, err := async.Retry(func() error {
 		i++
 		if i == 3 {
-			return expected
+			return expectedErr
 		} else {
-			return errors.New("not 3")
+			return unexpectedErr
 		}
 	}, async.RetryOptions{
 		ErrorFilter: func(err error) bool {
-			return !errors.Is(err, expected)
+			return !errors.Is(err, expectedErr)
 		},
 	})
-	a.EqualNow(err, expected)
-	a.EqualNow(out, []any{expected})
+	a.IsErrorNow(err, expectedErr)
+	a.NotIsErrorNow(err, unexpectedErr)
+	a.EqualNow(out, []any{expectedErr})
 }
 
 func TestRetryWithContext(t *testing.T) {

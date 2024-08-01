@@ -30,7 +30,7 @@ func TestForever(t *testing.T) {
 		v = append(v, i)
 		return nil
 	})
-	a.EqualNow(err, done)
+	a.IsErrorNow(err, done)
 	a.EqualNow(i, 5)
 	a.EqualNow(v, []int{1, 2, 3, 4})
 }
@@ -62,7 +62,7 @@ func TestForeverWithContext(t *testing.T) {
 
 		return nil
 	})
-	a.EqualNow(err, done)
+	a.IsErrorNow(err, done)
 	a.EqualNow(i, 5)
 	a.EqualNow(v, []int{0, 0, 1, 1})
 }

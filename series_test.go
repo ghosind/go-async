@@ -47,7 +47,7 @@ func TestSeriesFailure(t *testing.T) {
 	}
 	out, err := async.Series(tasks...)
 	a.NotNilNow(err)
-	a.ContainsString(err.Error(), expectedErr.Error())
+	a.IsErrorNow(err, expectedErr)
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {0, expectedErr}, {}, {}})
 	a.EqualNow(seq, []int{0, 1})
 }
@@ -74,7 +74,7 @@ func TestSeriesWithContext(t *testing.T) {
 
 	out, err := async.SeriesWithContext(ctx, tasks...)
 	a.NotNilNow(err)
-	a.ContainsStringNow(err.Error(), timeoutErr.Error())
+	a.IsErrorNow(err, timeoutErr)
 	a.EqualNow(out, [][]any{{nil}, {nil}, {timeoutErr}, {}, {}})
 }
 

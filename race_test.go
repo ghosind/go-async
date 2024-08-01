@@ -66,6 +66,7 @@ func TestRaceWithFailed(t *testing.T) {
 
 	out, index, err := async.Race(funcs...)
 	a.NotNilNow(err)
+	a.IsErrorNow(err, expectedErr)
 	a.EqualNow(err.Error(), "function 2 error: expected error")
 	a.EqualNow(index, 2)
 	a.EqualNow(data, []bool{false, false, false, false, false})

@@ -33,7 +33,7 @@ func TestSeqWithFailure(t *testing.T) {
 	}, func(err error) {
 		a.FailNow()
 	})
-	a.NotNilNow(err)
+	a.IsErrorNow(err, expectedErr)
 	a.ContainsStringNow(err.Error(), expectedErr.Error())
 }
 
@@ -63,17 +63,17 @@ func TestSeqCheckFuncs(t *testing.T) {
 	_, err = async.Seq(func() string { return "" }, func(ctx context.Context) {})
 	a.NilNow(err)
 	_, err = async.Seq(nil)
-	a.EqualNow(err, async.ErrNotFunction)
+	a.IsErrorNow(err, async.ErrNotFunction)
 	_, err = async.Seq(1, 2)
-	a.EqualNow(err, async.ErrNotFunction)
+	a.IsErrorNow(err, async.ErrNotFunction)
 	_, err = async.Seq(func() {}, nil)
-	a.EqualNow(err, async.ErrNotFunction)
+	a.IsErrorNow(err, async.ErrNotFunction)
 	_, err = async.Seq(func() {}, func(n int) {})
-	a.EqualNow(err, async.ErrInvalidSeqFuncs)
+	a.IsErrorNow(err, async.ErrInvalidSeqFuncs)
 	_, err = async.Seq(func() string { return "" }, func(n int) {})
-	a.EqualNow(err, async.ErrInvalidSeqFuncs)
+	a.IsErrorNow(err, async.ErrInvalidSeqFuncs)
 	_, err = async.Seq(func() string { return "" }, func(ctx context.Context, s string, n int) {})
-	a.EqualNow(err, async.ErrInvalidSeqFuncs)
+	a.IsErrorNow(err, async.ErrInvalidSeqFuncs)
 }
 
 func TestSeqWithContext(t *testing.T) {
@@ -186,7 +186,7 @@ func TestSeqGroupsWithFailure(t *testing.T) {
 
 	err := async.SeqGroups(groups...)
 	a.NotNilNow(err)
-	a.ContainsStringNow(err.Error(), expectedErr.Error())
+	a.IsErrorNow(err, expectedErr)
 
 	for i := 0; i < 3; i++ {
 		if i == 1 {

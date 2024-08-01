@@ -59,6 +59,7 @@ func TestAllFailure(t *testing.T) {
 
 	out, err := async.All(funcs...)
 	a.NotNilNow(err)
+	a.IsErrorNow(err, expectedErr)
 	a.EqualNow(err.Error(), "function 2 error: n = 2")
 	a.EqualNow(data, []bool{true, true, false, false, false})
 	a.EqualNow(out, [][]any{{nil}, {nil}, {expectedErr}, nil, nil})
@@ -174,6 +175,7 @@ func TestAllCompletedPartialFailure(t *testing.T) {
 
 	out, err := async.AllCompleted(funcs...)
 	a.NotNilNow(err)
+	a.IsErrorNow(err, errNIs2)
 	a.EqualNow(err.Error(), "function 2 error: n = 2")
 	a.EqualNow(data, []bool{true, true, false, true, true})
 	a.EqualNow(out, [][]any{{0, nil}, {1, nil}, {2, errNIs2}, {3, nil}, {4, nil}})

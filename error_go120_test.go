@@ -19,6 +19,6 @@ func TestUnwrapExecutionsError(t *testing.T) {
 	}
 
 	errs := ExecutionErrors{err}
-	a.TrueNow(errors.Is(errs, err))
-	a.TrueNow(errors.Is(errs, innerErr))
+	a.IsErrorNow(errs, err)
+	a.IsErrorNow(errs, innerErr)
 }

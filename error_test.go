@@ -16,27 +16,31 @@ func TestExecutionError(t *testing.T) {
 		err:   innerErr,
 	}
 
-	a.EqualNow(err.Error(), "function 0 error: inner error")
+	a.IsErrorNow(err, innerErr)
 	a.EqualNow(err.Index(), 0)
 	a.EqualNow(err.Err(), innerErr)
 }
 
 func TestExecutionErrors(t *testing.T) {
 	a := assert.New(t)
+	err1 := errors.New("inner error 1")
+	err2 := errors.New("inner error 2")
 
 	var ee ExecutionErrors = []ExecutionError{
 		&executionError{
 			index: 0,
-			err:   errors.New("inner error 1"),
+			err:   err1,
 		},
 		&executionError{
 			index: 1,
-			err:   errors.New("inner error 2"),
+			err:   err2,
 		},
 	}
 
 	a.EqualNow(ee.Error(), `function 0 error: inner error 1
 function 1 error: inner error 2`)
+	a.IsErrorNow(ee, err1)
+	a.IsErrorNow(ee, err2)
 }
 
 func TestConvertErrorListToExecutionErrors(t *testing.T) {
@@ -72,6 +76,6 @@ func TestUnwrapExecutionError(t *testing.T) {
 		index: 0,
 	}
 
-	a.TrueNow(errors.Is(err, innerErr))
-	a.NotTrueNow(errors.Is(err, errors.New("unexpected error")))
+	a.IsErrorNow(err, innerErr)
+	a.NotIsErrorNow(err, errors.New("unexpected error"))
 }

@@ -85,7 +85,7 @@ func TestUntilWithTestFunctionError(t *testing.T) {
 		return 0
 	})
 	a.NotNilNow(err)
-	a.EqualNow(err, expectedErr)
+	a.IsErrorNow(err, expectedErr)
 	a.EqualNow(out, []any{0})
 }
 

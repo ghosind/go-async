@@ -61,7 +61,7 @@ func TestWhileWithTestFunctionError(t *testing.T) {
 		return 0
 	})
 	a.NotNilNow(err)
-	a.EqualNow(err, expectedErr)
+	a.IsErrorNow(err, expectedErr)
 	a.EqualNow(out, []any{})
 }
 
@@ -75,7 +75,7 @@ func TestWhileWithFunctionError(t *testing.T) {
 		return 0, expectedErr
 	})
 	a.NotNilNow(err)
-	a.EqualNow(err, expectedErr)
+	a.IsErrorNow(err, expectedErr)
 	a.EqualNow(out, []any{0, expectedErr})
 }
 

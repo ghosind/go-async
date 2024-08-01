@@ -37,7 +37,7 @@ func TestTimesWithFailure(t *testing.T) {
 		return nil
 	})
 	a.NotNilNow(err)
-	a.ContainsStringNow(err.Error(), expectedErr.Error())
+	a.IsErrorNow(err, expectedErr)
 	a.ContainsElementNow(out, []any{expectedErr})
 }
 
@@ -67,7 +67,7 @@ func TestTimesWithContext(t *testing.T) {
 			canFunc()
 		}
 	})
-	a.EqualNow(err, async.ErrContextCanceled)
+	a.IsErrorNow(err, async.ErrContextCanceled)
 	a.EqualNow(finished, []int32{1})
 }
 
@@ -106,7 +106,7 @@ func TestTimesLimitWithFailure(t *testing.T) {
 		return nil
 	})
 	a.NotNilNow(err)
-	a.ContainsStringNow(err.Error(), expectedErr.Error())
+	a.IsErrorNow(err, expectedErr)
 	a.ContainsElementNow(out, []any{expectedErr})
 
 	a.PanicOfNow(func() {
@@ -161,7 +161,7 @@ func TestTimesSeriesWithFailure(t *testing.T) {
 		return t, nil
 	})
 	a.NotNilNow(err)
-	a.ContainsStringNow(err.Error(), expectedErr.Error())
+	a.IsErrorNow(err, expectedErr)
 	a.EqualNow(out, [][]any{{int32(1), nil}, {int32(2), nil}, {int32(3), expectedErr}, {}, {}})
 }
 

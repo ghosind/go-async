@@ -62,6 +62,7 @@ func TestParallelerRunWithFailure(t *testing.T) {
 
 	out, err := p.Run()
 	a.NotNilNow(err)
+	a.IsErrorNow(err, expectedErr)
 	a.EqualNow(out, [][]any{{nil}, {nil}, {expectedErr}, {}, {}})
 	a.EqualNow(cnt.Load(), 3)
 }
@@ -200,6 +201,7 @@ func TestParallelerRunCompletedWithFailure(t *testing.T) {
 
 	out, err := p.RunCompleted()
 	a.NotNilNow(err)
+	a.IsErrorNow(err, expectedErr)
 	a.EqualNow(out, [][]any{{nil}, {nil}, {expectedErr}, {nil}, {nil}})
 	a.EqualNow(cnt.Load(), 5)
 }
