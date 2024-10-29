@@ -91,10 +91,10 @@ func TestUntilWithTestFunctionError(t *testing.T) {
 
 func TestUntilWithContext(t *testing.T) {
 	a := assert.New(t)
+	start := time.Now()
 	ctx, canFunc := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer canFunc()
 
-	start := time.Now()
 	out, err := async.UntilWithContext(ctx, func(ctx context.Context) bool {
 		select {
 		case <-ctx.Done():

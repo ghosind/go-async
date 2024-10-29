@@ -81,10 +81,10 @@ func TestWhileWithFunctionError(t *testing.T) {
 
 func TestWhileWithContext(t *testing.T) {
 	a := assert.New(t)
+	start := time.Now()
 	ctx, canFunc := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer canFunc()
 
-	start := time.Now()
 	out, err := async.WhileWithContext(ctx, func(ctx context.Context) bool {
 		select {
 		case <-ctx.Done():
