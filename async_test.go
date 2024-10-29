@@ -133,15 +133,61 @@ func TestInvokeAsyncFn(t *testing.T) {
 	a.NilNow(err)
 	a.EqualNow(ret, []any{})
 
-	a.PanicOfNow(func() {
-		invokeAsyncFn(func(ctx context.Context, vals ...int) {}, ctx, []any{nil})
-	}, "variadic function unsupported")
+	// a.PanicOfNow(func() {
+	// 	invokeAsyncFn(func(ctx context.Context, vals ...int) {}, ctx, []any{nil})
+	// }, "variadic function unsupported")
 
 	ret, err = invokeAsyncFn(func() int {
 		panic(expectErr)
 	}, ctx, nil)
 	a.EqualNow(err, expectErr)
 	a.EqualNow(ret, []any{0})
+}
+
+func TestInvokeVariadicAsyncFn(t *testing.T) {
+	a := assert.New(t)
+	ctx := context.Background()
+
+	ret, err := invokeAsyncFn(func(vals ...int) {}, ctx, []any{})
+	a.NilNow(err)
+	a.EqualNow(ret, []any{})
+
+	ret, err = invokeAsyncFn(func(ctx context.Context, vals ...int) {}, ctx, []any{})
+	a.NilNow(err)
+	a.EqualNow(ret, []any{})
+
+	ret, err = invokeAsyncFn(func(vals ...int) {}, ctx, []any{1, 2, 3})
+	a.NilNow(err)
+	a.EqualNow(ret, []any{})
+
+	ret, err = invokeAsyncFn(func(ctx context.Context, vals ...int) {}, ctx, []any{ctx, 1, 2, 3})
+	a.NilNow(err)
+	a.EqualNow(ret, []any{})
+
+	ret, err = invokeAsyncFn(func(ctx context.Context, s string, vals ...int) {}, ctx, []any{"test", 1})
+	a.NilNow(err)
+	a.EqualNow(ret, []any{})
+
+	ret, err = invokeAsyncFn(func(vals ...int) int {
+		if len(vals) > 0 {
+			return vals[0]
+		}
+		return -1
+	}, ctx, []any{1, 2, 3})
+	a.NilNow(err)
+	a.EqualNow(ret, []any{1})
+
+	a.PanicNow(func() {
+		invokeAsyncFn(func(ctx context.Context, s string, vals ...int) {}, ctx, []any{})
+	})
+
+	a.PanicNow(func() {
+		invokeAsyncFn(func(ctx context.Context, s string, vals ...int) {}, ctx, []any{"a", "b"})
+	})
+
+	a.PanicNow(func() {
+		invokeAsyncFn(func(ctx context.Context, vals ...int) {}, ctx, []any{"a", "b"})
+	})
 }
 
 func TestInvokeAsyncFnWithParams(t *testing.T) {

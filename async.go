@@ -159,8 +159,70 @@ func makeFuncIn(ft reflect.Type, ctx context.Context, params []any) []reflect.Va
 	if !ft.IsVariadic() {
 		return makeNonVariadicFuncIn(ft, ctx, params, isTakeContext, isContextParam)
 	} else {
-		panic("variadic function unsupported")
+		return makeVariadicFuncIn(ft, ctx, params, isTakeContext, isContextParam)
 	}
+}
+
+// makeVariadicFuncIn checks the parameters of the variadic function and the params slice from the
+// caller, and returns a reflect.Value slice of the input parameters. It'll prepend the context to
+// the parameter list if the function's first parameter is a context and the first element in the
+// parameter list is not a context.
+func makeVariadicFuncIn(
+	ft reflect.Type,
+	ctx context.Context,
+	params []any,
+	isTakeContext, isContextParam bool,
+) []reflect.Value {
+	ftNumIn := ft.NumIn() - 1
+	numIn := len(params)
+	if isTakeContext && !isContextParam {
+		ftNumIn--
+		numIn++
+	}
+	if len(params) < ftNumIn {
+		panic(ErrUnmatchedParam)
+	}
+	ftNumIn = ft.NumIn() - 1
+	lastType := ft.In(ftNumIn).Elem()
+
+	in := make([]reflect.Value, numIn)
+	i := 0
+	if isTakeContext && !isContextParam {
+		in[i] = reflect.ValueOf(ctx)
+		i++
+	}
+
+	for j := 0; i < ftNumIn || j < len(params); j++ {
+		v := params[j]
+		vt := reflect.TypeOf(v)
+		vv := reflect.ValueOf(v)
+		it := lastType
+		if i < ftNumIn {
+			it = ft.In(i)
+		}
+
+		if vt != it {
+			if vt != nil && vt.ConvertibleTo(it) {
+				vv = vv.Convert(it)
+			} else if v == nil {
+				kind := it.Kind()
+				switch kind {
+				case reflect.Chan, reflect.Map, reflect.Pointer, reflect.UnsafePointer,
+					reflect.Interface, reflect.Slice:
+					vv = reflect.Zero(it)
+				default:
+					panic(ErrUnmatchedParam)
+				}
+			} else {
+				panic(ErrUnmatchedParam)
+			}
+		}
+
+		in[i] = vv
+		i++
+	}
+
+	return in
 }
 
 // makeNonVariadicFuncIn checks the parameters of the non-variadic function and the params slice
