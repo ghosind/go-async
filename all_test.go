@@ -11,6 +11,12 @@ import (
 	"github.com/ghosind/go-async"
 )
 
+type testError struct{}
+
+func (e *testError) Error() string {
+	return "test error"
+}
+
 func TestAllWithoutFuncs(t *testing.T) {
 	a := assert.New(t)
 
@@ -99,6 +105,18 @@ func TestAllWithTimeoutContext(t *testing.T) {
 	a.TrueNow(errors.Is(err, async.ErrContextCanceled))
 	a.EqualNow(data, []bool{true, true, false, false, false})
 	a.EqualNow(out, [][]any{{nil}, {nil}, nil, nil, nil})
+}
+
+func TestAllWithTestError(t *testing.T) {
+	a := assert.New(t)
+
+	_, err := async.All(func() error {
+		var e *testError
+		return e
+	}, func() *testError {
+		return nil
+	})
+	a.NilNow(err)
 }
 
 func BenchmarkAll(b *testing.B) {

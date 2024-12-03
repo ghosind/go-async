@@ -230,5 +230,4 @@ func TestInvokeAsyncFnWithParams(t *testing.T) {
 	a.PanicOfNow(func() {
 		invokeAsyncFn(func(ctx context.Context, n int) {}, ctx, []any{"hello"})
 	}, ErrUnmatchedParam)
-
 }

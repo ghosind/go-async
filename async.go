@@ -142,6 +142,10 @@ func invokeAsyncFn(fn AsyncFn, ctx context.Context, params []any) ([]any, error)
 			err = nil
 		} else {
 			err = out[numRet-1].Interface().(error)
+			// double check if the error is a custom error pointer
+			if err == nil || reflect.ValueOf(err).IsNil() {
+				err = nil
+			}
 		}
 	}
 	for i := 0; i < numRet; i++ {
