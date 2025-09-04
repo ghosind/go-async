@@ -8,14 +8,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        go_version: ["1.21", "1.22", "1.23"]
+        go_version: ["1.23", "1.24", "1.25"]
         os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Set up Go ${{ matrix.go_version }}
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
         go-version: ${{ matrix.go_version }}
 
