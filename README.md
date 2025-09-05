@@ -25,6 +25,7 @@ And then, import the library into your own code.
 import "github.com/ghosind/go-async"
 ```
 
+> [!NOTE]
 > This library is not stable yet, anything may change in the later versions.
 
 ## Getting Started
@@ -56,6 +57,7 @@ For all functions, you can use the `XXXWithContext` function (like `AllWithConte
 
 - [`All`](https://pkg.go.dev/github.com/ghosind/go-async#All)
 - [`AllCompleted`](https://pkg.go.dev/github.com/ghosind/go-async#AllCompleted)
+- [`Fallback`](https://pkg.go.dev/github.com/ghosind/go-async#Fallback)
 - [`Forever`](https://pkg.go.dev/github.com/ghosind/go-async#Forever)
 - [`Parallel`](https://pkg.go.dev/github.com/ghosind/go-async#Parallel)
 - [`ParallelCompleted`](https://pkg.go.dev/github.com/ghosind/go-async#ParallelCompleted)
