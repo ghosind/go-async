@@ -25,6 +25,9 @@ go get -u github.com/ghosind/go-async
 import "github.com/ghosind/go-async"
 ```
 
+> [!NOTE]
+> 本工具集尚未稳定，后续版本可能会有不兼容的更改。
+
 ## 入门
 
 下面的代码中，通过`All`函数并发执行函数直到全部执行完成，并返回它们的返回结果。
@@ -54,6 +57,7 @@ out, err := async.All(func (ctx context.Context) (int, error) {
 
 - [`All`](https://pkg.go.dev/github.com/ghosind/go-async#All)
 - [`AllCompleted`](https://pkg.go.dev/github.com/ghosind/go-async#AllCompleted)
+- [`Fallback`](https://pkg.go.dev/github.com/ghosind/go-async#Fallback)
 - [`Forever`](https://pkg.go.dev/github.com/ghosind/go-async#Forever)
 - [`Parallel`](https://pkg.go.dev/github.com/ghosind/go-async#Parallel)
 - [`ParallelCompleted`](https://pkg.go.dev/github.com/ghosind/go-async#ParallelCompleted)
